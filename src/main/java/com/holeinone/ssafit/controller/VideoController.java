@@ -29,9 +29,11 @@ public class VideoController {
 
         String searchQuery = "운동";
 
-        // part가 "all"이면 빈 문자열로 변경
+        // part가 "all"이면 운동만 서치
         if ("all".equalsIgnoreCase(part)) {
-            searchQuery += " " + part;
+            part = searchQuery;
+        } else { //정해진 부위가 있다면 부위 + "운동"
+            part = part + searchQuery;
         }
 
         // duration도 "all"이면 빈 문자열 처리
@@ -40,7 +42,7 @@ public class VideoController {
         }
 
 
-        return videoService.searchVideos(searchQuery, duration, recommend);
+        return videoService.searchVideos(part, duration, recommend);
 
 
     }
