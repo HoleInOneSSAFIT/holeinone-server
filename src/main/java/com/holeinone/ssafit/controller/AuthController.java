@@ -2,6 +2,7 @@ package com.holeinone.ssafit.controller;
 
 import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.model.service.UserService;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,17 @@ public class AuthController {
     public ResponseEntity<String> register(@RequestBody User user) {
         userService.register(user);
         return ResponseEntity.ok("회원가입 성공");
+    }
+
+    // 로그인
+    @PostMapping("/login")
+    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> loginRequest) {
+        String username = loginRequest.get("username");
+        String password = loginRequest.get("password");
+
+        Map<String, String> tokens = userService.login(username, password);
+
+        return ResponseEntity.ok(tokens);
     }
 
 }

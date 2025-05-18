@@ -8,4 +8,14 @@
         VALUES (#{username}, #{password}, #{name}, #{nickname}, #{profileImage}, #{gender}, #{birthdate}, #{height}, #{weight}, NOW(), #{isActive}, #{role}, #{refreshToken})
     </insert>
 
+    <select id="findByUsername" parameterType="string" resultType="User">
+        SELECT * FROM user WHERE username = #{username}
+    </select>
+
+    <update id="updateRefreshToken">
+        UPDATE user
+        SET refresh_token = #{refreshToken}
+        WHERE username = #{username}
+    </update>
+
 </mapper>
