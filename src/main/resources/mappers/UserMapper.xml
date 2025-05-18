@@ -3,4 +3,9 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.holeinone.ssafit.model.dao.UserDao">
 
+    <insert id="save" parameterType="User">
+        INSERT INTO user (username, password, name, nickname, profile_image, gender, birthdate, height, weight, joined_at, is_active, role, refresh_token)
+        VALUES (#{username}, #{password}, #{name}, #{nickname}, #{profileImage}, #{gender}, #{birthdate}, #{height}, #{weight}, NOW(), #{isActive}, #{role}, #{refreshToken})
+    </insert>
+
 </mapper>

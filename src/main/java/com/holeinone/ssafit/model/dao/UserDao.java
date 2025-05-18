@@ -1,4 +1,7 @@
 package com.holeinone.ssafit.model.dao;
 
-public class UserDao {
+import com.holeinone.ssafit.model.dto.User;
+
+public interface UserDao {
+    int save(User user);
 }
