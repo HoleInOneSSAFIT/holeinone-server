@@ -59,4 +59,9 @@ public class UserServiceImpl implements UserService {
 
         return tokens;
     }
+
+    @Override
+    public void logout(String refreshToken) {
+        userDao.deleteRefreshToken(refreshToken);
+    }
 }
