@@ -1,12 +1,16 @@
 package com.holeinone.ssafit.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 //영상
 @Data
-public class Video {
+@NoArgsConstructor
+@AllArgsConstructor
+public class Videos {
 
     private Long videoId; //영상 ID
     private String sourceType; // 영상 출처 'YOUTUBE' or 'UPLOAD'
