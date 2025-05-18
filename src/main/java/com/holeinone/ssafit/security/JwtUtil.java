@@ -14,7 +14,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 10; // 10초 -> 토큰 재발급용 테스트
+    private static final long ACCESS_TOKEN_VALIDITY = 1000 * 20;
     private static final long REFRESH_TOKEN_VALIDITY = 1000 * 60 * 60 * 24 * 7; // 7일
 
     // Access Token 생성
