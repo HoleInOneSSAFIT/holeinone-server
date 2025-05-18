@@ -34,4 +34,10 @@
         WHERE username = #{username}
     </update>
 
+    <update id="updateState" parameterType="User">
+        UPDATE user
+        SET is_active = #{isActive}
+        WHERE username = #{username}
+    </update>
+
 </mapper>

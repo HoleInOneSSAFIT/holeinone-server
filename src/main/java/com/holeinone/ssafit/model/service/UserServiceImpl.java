@@ -44,6 +44,11 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("아이디 또는 비밀번호가 잘못되었습니다.");
         }
 
+        // isActive로 탈퇴한 사람은 로그인 못하게 조건 걸어주기
+        if(!user.getIsActive()) {
+            throw new RuntimeException("이미 탈퇴한 계정입니다.");
+        }
+
         // 토큰 생성
         String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
@@ -95,5 +100,18 @@ public class UserServiceImpl implements UserService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userDao.update(user);
+    }
+
+    @Override
+    public void deleteAccount(String token) throws AccessDeniedException {
+        String username = jwtUtil.extractUsername(token);
+        User user = userDao.findByUsername(username);
+
+        if(user == null) {
+            throw new RuntimeException("존재하지 않는 사용자입니다.");
+        }
+
+        user.setIsActive(false); // soft delete
+        userDao.updateState(user);
     }
 }
