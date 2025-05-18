@@ -10,4 +10,5 @@ public interface UserService {
     void logout(String refreshToken);
     Map<String, String> rotate(String refreshToken);
     void update(User user, String token) throws AccessDeniedException;
+    void deleteAccount(String token) throws AccessDeniedException;
 }

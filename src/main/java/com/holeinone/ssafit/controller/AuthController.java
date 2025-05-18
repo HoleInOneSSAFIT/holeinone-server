@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -116,6 +117,19 @@ public class AuthController {
         System.out.println("[수정 후] 프로필사진 경로: " + user.getProfileImage() + " 비밀번호: " + user.getPassword() + " 닉네임: " + user.getNickname() + " 키: " + user.getHeight() + " 몸무게: " + user.getWeight());
 
         return ResponseEntity.ok("수정이 완료되었습니다.");
+    }
+
+    // 회원 탈퇴 - 본인 탈퇴 
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteAccount(@RequestHeader("Authorization") String token)
+            throws AccessDeniedException {
+        if(token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        userService.deleteAccount(token);
+
+        return ResponseEntity.ok("계정이 성공적으로 탈퇴 처리 되었습니다.");
     }
 
 }

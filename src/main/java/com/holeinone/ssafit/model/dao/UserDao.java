@@ -10,4 +10,5 @@ public interface UserDao {
     void deleteRefreshToken(String refreshToken);
     User findByRefreshToken(String refreshToken);
     int update(User user);
+    int updateState(User user); // soft delete를 위한 is_active 상태 업데이트
 }
