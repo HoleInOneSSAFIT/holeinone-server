@@ -5,15 +5,19 @@ import com.holeinone.ssafit.model.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.nio.file.AccessDeniedException;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -97,6 +101,21 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.get("accessToken"))
                 .build();
+    }
+
+    // 정보 수정
+    @PutMapping("/update")
+    public ResponseEntity<String> update(@RequestBody User user, @RequestHeader("Authorization") String token)
+            throws AccessDeniedException {
+        if(token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        userService.update(user, token);
+
+        System.out.println("[수정 후] 프로필사진 경로: " + user.getProfileImage() + " 비밀번호: " + user.getPassword() + " 닉네임: " + user.getNickname() + " 키: " + user.getHeight() + " 몸무게: " + user.getWeight());
+
+        return ResponseEntity.ok("수정이 완료되었습니다.");
     }
 
 }

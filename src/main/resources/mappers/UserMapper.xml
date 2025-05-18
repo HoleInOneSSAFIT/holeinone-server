@@ -28,4 +28,10 @@
         SELECT * FROM user WHERE refresh_token = #{refreshToken}
     </select>
 
+    <update id="update" parameterType="User">
+        UPDATE user
+        SET profile_image = #{profileImage}, password = #{password}, nickname = #{nickname}, height = #{height}, weight = #{weight}
+        WHERE username = #{username}
+    </update>
+
 </mapper>

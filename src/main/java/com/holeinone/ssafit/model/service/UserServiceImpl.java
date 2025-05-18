@@ -3,6 +3,7 @@ package com.holeinone.ssafit.model.service;
 import com.holeinone.ssafit.model.dao.UserDao;
 import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.security.JwtUtil;
+import java.nio.file.AccessDeniedException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -79,5 +80,20 @@ public class UserServiceImpl implements UserService {
         userDao.updateRefreshToken(user.getUsername(), newRefreshToken);
 
         return Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken);
+    }
+
+    @Override
+    public void update(User user, String token) throws AccessDeniedException {
+        String username = jwtUtil.extractUsername(token);
+
+        // user에 username 강제로 설정함(프론트에서 username 넘겨주지 않아도 됨)
+        user.setUsername(username);
+
+//        if(!username.equals(user.getUsername())) {
+//            throw new AccessDeniedException("본인만 수정할 수 있습니다.");
+//        }
+
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userDao.update(user);
     }
 }
