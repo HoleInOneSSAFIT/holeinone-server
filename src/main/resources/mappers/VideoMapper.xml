@@ -4,13 +4,15 @@
 <mapper namespace="com.holeinone.ssafit.model.dao.VideoDao">
 
     <!--유튜브 랜덤 영상 저장-->
-    <insert id="insertVideoRoutine" parameterType="com.holeinone.ssafit.model.dto.Videos">
+    <insert id="insertVideoRoutine" parameterType="Videos" useGeneratedKeys="true" keyProperty="videoId">
         INSERT INTO videos (
             source_type,
             video_url,
             title,
             duration_seconds,
             channel_name,
+            rest_seconds_after,
+            part,
             user_id
         ) VALUES (
                      #{sourceType},
@@ -18,7 +20,33 @@
                      #{title},
                      #{durationSeconds},
                      #{channelName},
+                     #{restSecondsAfter},
+                     #{part},
                      #{userId}
+                 )
+    </insert>
+
+    <!--운동 루틴 아이디 생성-->
+    <insert id="createRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
+        INSERT INTO routine (
+            is_shared,
+            user_id
+        ) VALUES (
+                     #{isShared},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 테이블에 저장 -->
+    <insert id="insertRoutineVideo" parameterType="RoutineVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{videoId},
+                     #{sequenceOrder}
                  )
     </insert>
 

@@ -10,5 +10,5 @@ public interface VideoService {
     List<Videos> searchVideos(String part, String duration, String recommend);
     
     //루틴에 우동 영상 저장하기
-    int insertVideoRoutine(Videos video);
+    int insertVideoRoutine(List<Videos> video);
 }
