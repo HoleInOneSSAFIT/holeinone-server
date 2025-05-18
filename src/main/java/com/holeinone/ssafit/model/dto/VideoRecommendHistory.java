@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 //사용자 영상 추천 히스토리
 @Data
-public class VideoRecommendHistoryDTO {
+public class VideoRecommendHistory {
 
     private Long historyId; //영상 추천 히스토리 ID
     private Boolean isSkipped; //사용자 영상 넘김 여부
