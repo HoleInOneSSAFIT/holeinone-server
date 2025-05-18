@@ -108,11 +108,16 @@ public class VideoController {
     /**
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
      * **/
-    //루틴에 해당 영상 저장하기
+    //루틴에 영상들 저장하기
     @PostMapping("/insertVideoRoutine")
-    public String insertVideo(@RequestBody Videos video ) {
+    public String insertVideo(@RequestBody List<Videos> video) {
 
-        video.setVideoId(0L); // 0으로 초기화(랜덤으로 영상을 뽑기 위해 넣은 임의 id 이므로 초기하 필요)
+        //프론트에서 영상 여러 개를 선택해 리스트에 담아두고 루틴 생성을 위해 저장 🖥️
+
+        // 0으로 초기화(랜덤으로 영상을 뽑기 위해 넣은 임의 id 이므로 초기화)
+        for(Videos videoList : video){
+            videoList.setVideoId(0L);
+        }
 
         //해당 비디오 루틴에 저장하러 가기
         int result = videoService.insertVideoRoutine(video);

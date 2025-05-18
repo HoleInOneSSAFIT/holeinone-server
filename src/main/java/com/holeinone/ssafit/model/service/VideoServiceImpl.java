@@ -1,5 +1,7 @@
 package com.holeinone.ssafit.model.service;
 
+import com.holeinone.ssafit.model.dto.Routine;
+import com.holeinone.ssafit.model.dto.RoutineVideo;
 import com.holeinone.ssafit.model.dto.Videos;
 import org.springframework.beans.factory.annotation.Value;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
@@ -12,6 +14,7 @@ import com.google.api.services.youtube.model.VideoListResponse;
 import com.holeinone.ssafit.model.dao.VideoDao;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -90,7 +93,7 @@ public class VideoServiceImpl implements VideoService {
                 // 검색 결과가 존재하면 영상 길이 기준으로 필터링 후 리스트에 추가
                 if (searchResultList != null) {
                     //영상 길이 필터링 하기
-                    List<Videos> filtered = filterVideosByDuration(youtubeService, searchResultList, duration);
+                    List<Videos> filtered = filterVideosByDuration(part,youtubeService, searchResultList, duration);
                     videos.addAll(filtered);  // 필터링된 영상 리스트 누적 추가
                     totalResultsFetched += searchResultList.size();  // 현재까지 가져온 개수 카운트
                     System.out.println("현재까지 영상 개수: " + videos.size());  // 진행상황 출력
@@ -117,7 +120,7 @@ public class VideoServiceImpl implements VideoService {
      * @param duration 사용자가 선택한 길이 ("short", "medium", "long")
      * @return 필터링된 영상 리스트 (제목 + URL)
      */
-    private List<Videos> filterVideosByDuration(YouTube youtubeService, List<SearchResult> searchResults, String duration) {
+    private List<Videos> filterVideosByDuration(String part ,YouTube youtubeService, List<SearchResult> searchResults, String duration) {
         List<Videos> filteredVideos = new ArrayList<>(); // 최종 반환 리스트
 
         try {
@@ -162,6 +165,7 @@ public class VideoServiceImpl implements VideoService {
                     videos.setTitle(title);
                     videos.setDurationSeconds((int) seconds);
                     videos.setChannelName(video.getSnippet().getChannelTitle());
+                    videos.setPart(part); //운동 부위 저장
                     videos.setCreatedAt(null); // 필요 시 DB 저장 시점에 설정
                     videos.setUpdatedAt(null);
                     videos.setUserId(null); // 유튜브 영상은 사용자 업로드가 아니므로 null
@@ -189,11 +193,41 @@ public class VideoServiceImpl implements VideoService {
         return java.time.Duration.parse(isoDuration).getSeconds();
     }
 
-    //루틴에 영상 저장하기
+    //루틴 운동 영상 저장하기
+    @Transactional
     @Override
-    public int insertVideoRoutine(Videos video) {
+    public int insertVideoRoutine(List<Videos> video) {
 
-        int result = videoDao.insertVideoRoutine(video);
+        int result = 0;
+
+        // 루틴 객체 생성 및 insert
+        Routine routine = new Routine();
+        routine.setUserId((long)2313); //임의로 생성한 유저 아이디
+        routine.setIsShared(false); // 기본 비공유
+
+        //운동 루틴 아이디 생성
+        long routineId = videoDao.createRoutine(routine);
+
+
+        int sequence = 1; //운동 루틴 순서
+
+        //하나의 루틴 아이디에 여러개의 영상을 순서대로 저장한다
+        for(Videos videos : video) {
+
+            //루틴 운동 영상들 저장하기
+            videoDao.insertVideoRoutine(videos);
+
+            RoutineVideo rv = new RoutineVideo();
+            rv.setRoutineId(routineId); //하나의 루틴 아이디 세팅
+            rv.setVideoId(videos.getVideoId()); // insert 후에 설정됨
+            rv.setSequenceOrder(sequence++);
+
+            result = videoDao.insertRoutineVideo(rv);
+
+
+        }
+
+
 
         return result;
 

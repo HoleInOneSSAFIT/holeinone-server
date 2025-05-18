@@ -17,6 +17,8 @@ public class Videos {
     private String videoUrl; //영상 URL
     private String title; //영상 제목
     private Integer durationSeconds; //영상 길이(초단위)
+    private Integer restSecondsAfter; //운동 후 쉬는 시간
+    private String part; //운동 부위
     private String channelName; //유튜브 채널명
     private LocalDateTime createdAt; //등록일
     private LocalDateTime updatedAt; //수정일
