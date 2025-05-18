@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -73,6 +74,29 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
         return ResponseEntity.ok("로그아웃 되었습니다");
+    }
+
+    // 토큰 만료시 재발급
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@CookieValue(value="refreshToken", required=false) String refreshToken,
+                                                HttpServletResponse response) {
+
+        if(refreshToken == null || refreshToken.isBlank()) {
+            return ResponseEntity.badRequest().body("리프레시 토큰이 존재하지 않습니다.");
+        } // 다시 로그인 하도록 유도하기
+
+        Map<String, String> tokens = userService.rotate(refreshToken); // 기존의 리프레시 토큰은 사용XX
+
+        // 새로운 리프레시 토큰 받아와서 쿠키 교체하기
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.get("refreshToken"))
+                .httpOnly(true).secure(true).sameSite("Lax")
+                .path("/").maxAge(7 * 24 * 60 * 60).build(); // 새로운 리프레시 쿠키 세팅하기
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        // 새로운 액세스 토큰 받아서 헤더에 넣기
+        return ResponseEntity.ok()
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.get("accessToken"))
+                .build();
     }
 
 }
