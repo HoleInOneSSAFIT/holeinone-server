@@ -7,4 +7,5 @@ public interface UserDao {
     int save(User user);
     User findByUsername(@Param("username") String username);
     void updateRefreshToken(@Param("username") String username, @Param("refreshToken") String refreshToken);
+    void deleteRefreshToken(String refreshToken);
 }

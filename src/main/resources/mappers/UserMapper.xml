@@ -18,4 +18,10 @@
         WHERE username = #{username}
     </update>
 
+    <update id="deleteRefreshToken">
+        UPDATE user
+        SET refresh_token = NULL
+        WHERE refresh_token = #{refreshToken}
+    </update>
+
 </mapper>

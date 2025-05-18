@@ -17,7 +17,7 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    // 모든 권한 허용으로 true 상태, 권한에 따라 접근 막고 싶다면 false 처리 하기
+    // 모든 권한 허용으로 true 상태, 권한에 따라 접근 막고 싶다면 false 처리 하고 아래 matchers 주석 해제
     // application.properties도 false 처리 해야함
     @Value("${security.open-all:true}")
     private boolean openAll;
