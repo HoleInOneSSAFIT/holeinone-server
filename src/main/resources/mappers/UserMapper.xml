@@ -24,4 +24,8 @@
         WHERE refresh_token = #{refreshToken}
     </update>
 
+    <select id="findByRefreshToken" parameterType="string" resultType="User">
+        SELECT * FROM user WHERE refresh_token = #{refreshToken}
+    </select>
+
 </mapper>

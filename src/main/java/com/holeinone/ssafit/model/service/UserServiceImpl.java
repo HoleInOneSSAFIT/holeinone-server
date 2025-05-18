@@ -64,4 +64,20 @@ public class UserServiceImpl implements UserService {
     public void logout(String refreshToken) {
         userDao.deleteRefreshToken(refreshToken);
     }
+
+    @Override
+    public Map<String, String> rotate(String rawRefreshToken) {
+        // 쿠키에서 바로 꺼낸 rawRefreshToken이 db에 있는지부터 확인
+        User user = userDao.findByRefreshToken(rawRefreshToken);
+        if(user == null) throw new RuntimeException("토큰이 존재하지 않습니다.");
+
+        // 새 토큰 발급하기
+        String newAccessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getUsername());
+
+        // rotate하기: 기존의 토큰은 null로 하고, 새로운 토큰 업데이트 하기
+        userDao.updateRefreshToken(user.getUsername(), newRefreshToken);
+
+        return Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken);
+    }
 }
