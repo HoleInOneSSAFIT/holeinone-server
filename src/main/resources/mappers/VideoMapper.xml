@@ -4,8 +4,8 @@
 <mapper namespace="com.holeinone.ssafit.model.dao.VideoDao">
 
     <!--유튜브 랜덤 영상 저장-->
-    <insert id="insertVideoRoutine" parameterType="Videos" useGeneratedKeys="true" keyProperty="videoId">
-        INSERT INTO videos (
+    <insert id="insertVideoRoutine" parameterType="YoutubeVideo" useGeneratedKeys="true" keyProperty="videoId">
+        INSERT INTO youtube_video (
             source_type,
             video_url,
             title,
@@ -13,6 +13,7 @@
             channel_name,
             rest_seconds_after,
             part,
+            youtube_sequence,
             user_id
         ) VALUES (
                      #{sourceType},
@@ -22,6 +23,28 @@
                      #{channelName},
                      #{restSecondsAfter},
                      #{part},
+                     #{youtubeSequence},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 업로드 영상 저장 -->
+    <insert id="insertUploadedVideo" parameterType="UploadedVideoDTO" useGeneratedKeys="true" keyProperty="uploadedVideoId">
+        INSERT INTO uploaded_video (
+            video_url,
+            original_filename,
+            title,
+            part,
+            duration_seconds,
+            uploaded_sequence,
+            user_id
+        ) VALUES (
+                     #{videoUrl},
+                     #{originalFilename},
+                     #{title},
+                     #{part},
+                     #{durationSeconds},
+                     #{uploadedSequence},
                      #{userId}
                  )
     </insert>
@@ -37,15 +60,28 @@
                  )
     </insert>
 
-    <!-- 루틴-영상 매핑 테이블에 저장 -->
-    <insert id="insertRoutineVideo" parameterType="RoutineVideo">
+    <!-- 루틴-영상 매핑 저장 : 유튜브 영상용 -->
+    <insert id="insertRoutineYoutubeVideo" parameterType="YoutubeVideo">
         INSERT INTO routine_video (
             routine_id,
-            video_id,
+            youtube_video_id,
             sequence_order
         ) VALUES (
                      #{routineId},
-                     #{videoId},
+                     #{youtubeVideoId},
+                     #{sequenceOrder}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 저장 : 업로드 영상용 -->
+    <insert id="insertRoutineUploadedVideo" parameterType="UploadVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            uploaded_video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{uploadedVideoId},
                      #{sequenceOrder}
                  )
     </insert>

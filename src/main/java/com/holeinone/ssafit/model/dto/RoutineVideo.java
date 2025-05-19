@@ -1,14 +1,18 @@
 package com.holeinone.ssafit.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-//운동 루틴
+//루틴 영상 매핑
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class RoutineVideo {
 
-    private Long routineVideoId; //매핑 ID
-    private Integer sequenceOrder; //루틴 내 순서
-    private Integer restSecondsAfter; //영상 이후 쉬는 시간
-    private Long routineId; //루틴 ID(FK ROUTINE 테이블 ID)
-    private Long videoId; //비디오 ID(FK VIDEO 테이블 ID)
+    private Long routineVideoId;       // 기본키
+    private Integer sequenceOrder;     // 루틴 내 순서
+    private Long routineId;            // 루틴 ID (FK)
+    private Long youtubeVideoId;              // 유튜브 영상 ID (FK)
+    private Long uploadedVideoId;          // 직접 업로드한 영상 ID (FK)
 }

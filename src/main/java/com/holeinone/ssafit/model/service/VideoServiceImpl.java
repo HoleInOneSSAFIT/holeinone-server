@@ -1,8 +1,7 @@
 package com.holeinone.ssafit.model.service;
 
-import com.holeinone.ssafit.model.dto.Routine;
-import com.holeinone.ssafit.model.dto.RoutineVideo;
-import com.holeinone.ssafit.model.dto.Videos;
+import com.holeinone.ssafit.model.dto.*;
+import com.holeinone.ssafit.util.S3Uploader;
 import org.springframework.beans.factory.annotation.Value;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.json.gson.GsonFactory;
@@ -15,9 +14,10 @@ import com.holeinone.ssafit.model.dao.VideoDao;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,19 +29,24 @@ public class VideoServiceImpl implements VideoService {
 
     private final String apiKey;
 
+    private final S3Uploader s3Uploader;
+
     long videoIdx = 0;
 
     // application.properties에 넣어둔 값 자바 변수로 넣어줌
-    public VideoServiceImpl(VideoDao videoDao, @Value("${youtube.api.key}") String apiKey) {
+    public VideoServiceImpl(VideoDao videoDao,
+                            @Value("${youtube.api.key}") String apiKey,
+                            S3Uploader s3Uploader) {
         this.videoDao = videoDao;
         this.apiKey = apiKey;
+        this.s3Uploader = s3Uploader;
     }
 
     // 유튜브 영상 검색
     @Override
-    public List<Videos> searchVideos(String part, String duration, String recommend) {
+    public List<YoutubeVideo> searchVideos(String part, String duration, String recommend) {
 
-        List<Videos> videos = new ArrayList<>();  // 비디오 정보를 저장할 리스트
+        List<YoutubeVideo> videos = new ArrayList<>();  // 비디오 정보를 저장할 리스트
 
         System.out.println(part);
 
@@ -93,7 +98,7 @@ public class VideoServiceImpl implements VideoService {
                 // 검색 결과가 존재하면 영상 길이 기준으로 필터링 후 리스트에 추가
                 if (searchResultList != null) {
                     //영상 길이 필터링 하기
-                    List<Videos> filtered = filterVideosByDuration(part,youtubeService, searchResultList, duration);
+                    List<YoutubeVideo> filtered = filterVideosByDuration(part,youtubeService, searchResultList, duration);
                     videos.addAll(filtered);  // 필터링된 영상 리스트 누적 추가
                     totalResultsFetched += searchResultList.size();  // 현재까지 가져온 개수 카운트
                     System.out.println("현재까지 영상 개수: " + videos.size());  // 진행상황 출력
@@ -120,8 +125,8 @@ public class VideoServiceImpl implements VideoService {
      * @param duration 사용자가 선택한 길이 ("short", "medium", "long")
      * @return 필터링된 영상 리스트 (제목 + URL)
      */
-    private List<Videos> filterVideosByDuration(String part ,YouTube youtubeService, List<SearchResult> searchResults, String duration) {
-        List<Videos> filteredVideos = new ArrayList<>(); // 최종 반환 리스트
+    private List<YoutubeVideo> filterVideosByDuration(String part , YouTube youtubeService, List<SearchResult> searchResults, String duration) {
+        List<YoutubeVideo> filteredVideos = new ArrayList<>(); // 최종 반환 리스트
 
         try {
             // 검색 결과의 videoId만 모아서 videoId 리스트 만들기
@@ -158,21 +163,22 @@ public class VideoServiceImpl implements VideoService {
                     String videoId = video.getId();
 
                     // Videos 객체 생성 및 설정
-                    Videos videos = new Videos();
-                    videos.setVideoId(videoIdx++);
-                    videos.setSourceType("YOUTUBE");
-                    videos.setVideoUrl("https://www.youtube.com/watch?v=" + videoId);
-                    videos.setTitle(title);
-                    videos.setDurationSeconds((int) seconds);
-                    videos.setChannelName(video.getSnippet().getChannelTitle());
-                    videos.setPart(part); //운동 부위 저장
-                    videos.setCreatedAt(null); // 필요 시 DB 저장 시점에 설정
-                    videos.setUpdatedAt(null);
-                    videos.setUserId(null); // 유튜브 영상은 사용자 업로드가 아니므로 null
+                    YoutubeVideo youtubeVideo = new YoutubeVideo();
+                    youtubeVideo.setYoutubeVideoId(videoIdx++);
+                    youtubeVideo.setSourceType("RECOMMENDED");
+                    youtubeVideo.setVideoUrl("https://www.youtube.com/watch?v=" + videoId);
+                    youtubeVideo.setTitle(title);
+                    youtubeVideo.setDurationSeconds((int) seconds);
+                    youtubeVideo.setChannelName(video.getSnippet().getChannelTitle());
+                    youtubeVideo.setPart(part); //운동 부위 저장
+                    youtubeVideo.setCreatedAt(null); // 필요 시 DB 저장 시점에 설정
+                    youtubeVideo.setUpdatedAt(null);
+                    youtubeVideo.setUserId(null); // 유튜브 영상은 사용자 업로드가 아니므로 null
 
-                    filteredVideos.add(videos);
+                    filteredVideos.add(youtubeVideo);
 
-                    System.out.println(title + " (https://www.youtube.com/watch?v=" + videoId  + ")" + " duration : "  + isoDuration);
+                    //System.out.println(title + " (https://www.youtube.com/watch?v=" + videoId  + ")" + " duration : "  + isoDuration);
+                    log.info("videoId = {}, duration = {}", videoId, isoDuration);
                 }
             }
 
@@ -196,7 +202,7 @@ public class VideoServiceImpl implements VideoService {
     //루틴 운동 영상 저장하기
     @Transactional
     @Override
-    public int insertVideoRoutine(List<Videos> video) {
+    public int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList, List<UploadedVideo> uploadedVideoList) {
 
         int result = 0;
 
@@ -205,31 +211,69 @@ public class VideoServiceImpl implements VideoService {
         routine.setUserId((long)2313); //임의로 생성한 유저 아이디
         routine.setIsShared(false); // 기본 비공유
 
-        //운동 루틴 아이디 생성
+        //1. 운동 루틴 생성 -> 아이디 반환
         long routineId = videoDao.createRoutine(routine);
 
+        //2. 유튜브 영상 저장(유튜브 영상이 있다면)
+        if(youtubeVideoList != null) {
+            for (YoutubeVideo youtubeVideo : youtubeVideoList) {
+                // YoutubeVideo 저장
+                videoDao.insertVideoRoutine(youtubeVideo);
 
-        int sequence = 1; //운동 루틴 순서
+                RoutineVideo rv = new RoutineVideo();
+                rv.setSequenceOrder(youtubeVideo.getYoutubeSequence()); //영상 순서 저장
+                rv.setRoutineId(routineId); //루틴 아이디 저장
+                rv.setYoutubeVideoId(youtubeVideo.getYoutubeVideoId()); //유튜브 아이디 저장
 
-        //하나의 루틴 아이디에 여러개의 영상을 순서대로 저장한다
-        for(Videos videos : video) {
-
-            //루틴 운동 영상들 저장하기
-            videoDao.insertVideoRoutine(videos);
-
-            RoutineVideo rv = new RoutineVideo();
-            rv.setRoutineId(routineId); //하나의 루틴 아이디 세팅
-            rv.setVideoId(videos.getVideoId()); // insert 후에 설정됨
-            rv.setSequenceOrder(sequence++);
-
-            result = videoDao.insertRoutineVideo(rv);
-
-
+                //영상-루틴 매핑 저장
+                result += videoDao.insertRoutineVideo(rv);
+            }
         }
 
+        // 3. 업로드 영상 저장
+        if (uploadedVideoList != null) {
+            for (UploadedVideo uploadedVideo : uploadedVideoList) {
 
+                // UploadedVideo 저장
+                videoDao.insertUploadedRoutine(uploadedVideo);
+
+                RoutineVideo rv = new RoutineVideo();
+                rv.setSequenceOrder(uploadedVideo.getUploadSequence()); //영상 순서 저장
+                rv.setRoutineId(routineId);
+                rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId());
+
+
+                result += videoDao.insertRoutineVideo(rv);
+            }
+        }
 
         return result;
+
+    }
+    
+    //영상 직접 업로드
+    @Override
+    public UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo) {
+
+        try {
+
+            //S3 업로드
+            String videoUrl = s3Uploader.upload(file, "uploaded-videos");
+
+            UploadedVideo videoDTO = new UploadedVideo();
+            videoDTO.setVideoUrl(videoUrl); //비디오 url 저장
+            videoDTO.setOriginalFilename(file.getOriginalFilename()); //파일 기존 이름
+            videoDTO.setTitle(uploadedVideo.getTitle()); //영상 제목
+            videoDTO.setPart(uploadedVideo.getPart()); //영상 부위
+            videoDTO.setDurationSeconds(uploadedVideo.getDurationSeconds()); //영상 길이
+
+
+            //영상 저장(s3 업로드, db저장 x)
+            return videoDTO;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
