@@ -6,10 +6,7 @@ import com.holeinone.ssafit.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -27,6 +24,16 @@ public class AdminController {
         checkAdmin(auth);
 
         return ResponseEntity.ok(userService.getAllUsers());
+    }
+
+    // 특정 회원 탈퇴
+    @DeleteMapping("/users/{username}")
+    public ResponseEntity<String> deleteUser(@RequestHeader("Authorization") String auth, @PathVariable String username) {
+        checkAdmin(auth);
+
+        userService.deleteAccountByUsername(username);
+
+        return ResponseEntity.ok("회원이 정상적으로 탈퇴 되었습니다.");
     }
 
     // admin인지 체크
