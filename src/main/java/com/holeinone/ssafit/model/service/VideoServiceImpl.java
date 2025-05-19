@@ -172,7 +172,8 @@ public class VideoServiceImpl implements VideoService {
 
                     filteredVideos.add(videos);
 
-                    System.out.println(title + " (https://www.youtube.com/watch?v=" + videoId  + ")" + " duration : "  + isoDuration);
+                    //System.out.println(title + " (https://www.youtube.com/watch?v=" + videoId  + ")" + " duration : "  + isoDuration);
+                    log.info("videoId = {}, duration = {}", videoId, isoDuration);
                 }
             }
 

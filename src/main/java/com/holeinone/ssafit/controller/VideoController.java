@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -125,4 +126,18 @@ public class VideoController {
 
         return "";
     }
+
+    //내가 찍은 영상 올리기
+    @PostMapping("/myUpload")
+    public String uploadVideo(@RequestParam("file") MultipartFile file) {
+
+
+
+
+
+
+
+    return "";
+    }
+
 }

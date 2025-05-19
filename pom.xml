@@ -102,10 +102,11 @@
             <version>1.43.3</version>
         </dependency>
 
-        <!-- Redis 의존성 추가 -->
+    <!--AWS S3 의존성-->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-redis</artifactId>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-s3</artifactId>
+            <version>1.12.782</version>
         </dependency>
 
     </dependencies>
