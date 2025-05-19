@@ -1,16 +1,21 @@
 package com.holeinone.ssafit.controller;
 
-import com.holeinone.ssafit.model.dto.Videos;
+import com.holeinone.ssafit.model.dto.UploadedVideo;
+import com.holeinone.ssafit.model.dto.VideoRoutineRequest;
+import com.holeinone.ssafit.model.dto.YoutubeVideo;
 import com.holeinone.ssafit.model.service.VideoService;
-import jakarta.servlet.ServletOutputStream;
+import com.holeinone.ssafit.util.S3Uploader;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -23,6 +28,7 @@ public class VideoController {
 
     private final VideoService videoService;
 
+
     /**
      * 지정된 쿼리 매개변수와 일치하는 검색 결과 컬렉션을 반환*
      *
@@ -30,10 +36,10 @@ public class VideoController {
      * @return 영상 제목 + 링크 목록
      */
     @GetMapping("/search")
-    public Videos searchYoutubeVideos(@RequestParam String part,
-                                      @RequestParam(required = false, defaultValue = "") String duration,
-                                      @RequestParam(required = false, defaultValue = "") String recommend,
-                                      HttpSession session) {
+    public YoutubeVideo searchYoutubeVideos(@RequestParam String part,
+                                            @RequestParam(required = false, defaultValue = "") String duration,
+                                            @RequestParam(required = false, defaultValue = "") String recommend,
+                                            HttpSession session) {
 
         String searchQuery = "운동";
 
@@ -51,7 +57,7 @@ public class VideoController {
 
         //랜덤 영상 리스트(만약 사용자가 내가 뽑아낸 영상을 다 넘겼다면? 어떻게 해야할지 생각이 필요하다)
         //재추천 로직이 필요한것으로 생각됩니다(기존 리스트랑 겹치지 않게)
-        List<Videos> videos = videoService.searchVideos(part, duration, recommend);
+        List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend);
 
         if (videos.isEmpty()) { //만약 영상이 없다면 오류 상태 던지기
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "영상 없음");
@@ -61,7 +67,7 @@ public class VideoController {
 
         //여러개의 영상을 랜덤으로 하나 픽하기
         int randomIdx = new Random().nextInt(videos.size());
-        Videos video = videos.get(randomIdx);
+        YoutubeVideo video = videos.get(randomIdx);
 
 
         //뽑은 영상 리스트 중에 하나 뽑아서 프론트로 던지기
@@ -73,16 +79,16 @@ public class VideoController {
      * @videoId 스킵하고자 하는 영상의 아이디
      **/
     @GetMapping("/reSearch")
-    public Videos reSearchYoutubeVideos(@RequestParam long videoId, HttpSession session) {
+    public YoutubeVideo reSearchYoutubeVideos(@RequestParam long youtubeVideoId, HttpSession session) {
 
-        List<Videos> videoList = (List<Videos>) session.getAttribute("videoList");
+        List<YoutubeVideo> videoList = (List<YoutubeVideo>) session.getAttribute("videoList");
 
         if (videoList == null || videoList.isEmpty()) { //저장된 영상 리스트가 없을 때
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "저장된 영상 리스트가 없습니다");
         }
 
         // videoId에 해당하는 영상 제거
-        videoList.removeIf(video -> video.getVideoId() == videoId);
+        videoList.removeIf(video -> video.getYoutubeVideoId() == youtubeVideoId);
 
         if (videoList.isEmpty()) {
             //추천할 영상이 더이상 없을 때
@@ -92,13 +98,13 @@ public class VideoController {
 
         // 남은 리스트 중 랜덤 추천
         int randomIdx = new Random().nextInt(videoList.size());
-        Videos nextVideo = videoList.get(randomIdx);
+        YoutubeVideo nextVideo = videoList.get(randomIdx);
 
         // 변경된 리스트 다시 세션에 저장
         session.setAttribute("videoList", videoList);
 
-        for (Videos video : videoList) {
-            System.out.println(video.getVideoId());
+        for (YoutubeVideo video : videoList) {
+            System.out.println(video.getYoutubeVideoId());
         }
 
         //다음 영상 추천하기
@@ -111,33 +117,63 @@ public class VideoController {
      * **/
     //루틴에 영상들 저장하기
     @PostMapping("/insertVideoRoutine")
-    public String insertVideo(@RequestBody List<Videos> video) {
+    public String insertVideo(@RequestBody List<YoutubeVideo> youtubeVideoList, HttpSession session) {
 
         //프론트에서 영상 여러 개를 선택해 리스트에 담아두고 루틴 생성을 위해 저장 🖥️
 
+        //업로드 영상은 세션에서 꺼내오기
+        List<UploadedVideo> uploadedVideoList = (List<UploadedVideo>) session.getAttribute("uploadVideoList");
+
         // 0으로 초기화(랜덤으로 영상을 뽑기 위해 넣은 임의 id 이므로 초기화)
-        for(Videos videoList : video){
-            videoList.setVideoId(0L);
+        for(YoutubeVideo youtubeVideo : youtubeVideoList){
+            youtubeVideo.setYoutubeVideoId(0L);
         }
 
-        //해당 비디오 루틴에 저장하러 가기
-        int result = videoService.insertVideoRoutine(video);
+        //해당 비디오 루틴에 저장하러 가기(유튜브 영상, 업로드 영상)
+        int result = videoService.insertVideoRoutine(youtubeVideoList, uploadedVideoList);
 
-
+        //영상 루틴 출력해줘야함
         return "";
     }
 
+    /***
+     * @file 내가 업로드한 영상 파일
+     * @UploadedVideo 그 외 영상 정보
+     * */
     //내가 찍은 영상 올리기
     @PostMapping("/myUpload")
-    public String uploadVideo(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<UploadedVideo> uploadVideo(@RequestParam("file") MultipartFile file,
+                                                     @RequestParam String title,
+                                                     @RequestParam String part,
+                                                     @RequestParam int durationSeconds,
+                                                     HttpSession session) {
+
+        UploadedVideo uploadedVideo = new UploadedVideo();
+        uploadedVideo.setTitle(title);
+        uploadedVideo.setPart(part);
+        uploadedVideo.setDurationSeconds(durationSeconds);
+
+        //영상 S3에 저장하러가기
+        UploadedVideo videoDTO = videoService.uploadVideo(file, uploadedVideo);
+
+        // 세션에서 리스트 꺼내기
+        List<UploadedVideo> uploadVideoList = (List<UploadedVideo>) session.getAttribute("uploadVideoList");
+
+        // 비어있으면 새 리스트 생성
+        if (uploadVideoList == null) {
+            uploadVideoList = new ArrayList<>();
+        }
 
 
+        //만약에 전체 루틴 생성 그만두게 되면 세션에서 이 값은 삭제해야 할듯
+        //그리고 이 영상을 삭제하는 버튼을 누를때도 삭제해야함
+        // 새 업로드된 영상 추가
+        uploadVideoList.add(videoDTO);
 
+        // 세션에 다시 저장
+        session.setAttribute("uploadVideoList", uploadVideoList);
 
-
-
-
-    return "";
+        return ResponseEntity.ok(videoDTO);
     }
 
 }

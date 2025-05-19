@@ -1,39 +1,41 @@
 package com.holeinone.ssafit.config;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 
-// Spring이 설정 클래스로 인식하게 된다
-@Configuration
+@Configuration  // Spring이 이 클래스를 설정 클래스임을 인식하도록 함
 public class S3Config {
 
-    //application.properties에 정의된 값을 주입받음
+    // application.properties에서 AWS 리전 값을 주입받음
     @Value("${cloud.aws.region.static}")
     private String region;
 
+    // AWS 액세스 키를 주입받음
     @Value("${cloud.aws.credentials.accessKey}")
     private String accessKey;
 
+    // AWS 시크릿 키를 주입받음
     @Value("${cloud.aws.credentials.secretKey}")
     private String secretKey;
 
-    // Bean으로 등록하여 다른 곳에서 주입받아 사용할 수 있게 함
+    /**
+     * S3Client를 Bean으로 등록하여 다른 클래스에서 주입받아 사용할 수 있게 함
+     * @return AWS SDK 2.x의 S3Client 객체
+     */
     @Bean
-    public AmazonS3 s3Client() {
+    public S3Client s3Client() {
+        // AWS 자격 증명 생성 (액세스 키, 시크릿 키)
+        AwsBasicCredentials awsCreds = AwsBasicCredentials.create(accessKey, secretKey);
 
-        // 액세스 키와 시크릿 키를 기반으로 자격 증명 생성
-        AWSCredentials awsCredentials = new BasicAWSCredentials(accessKey, secretKey);
-
-        // Amazon S3 클라이언트를 생성하고 리턴
-        return AmazonS3ClientBuilder.standard()
-                .withRegion(region) // AWS 리전 설정
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials)) // 자격 증명 설정
+        // S3 클라이언트 빌더를 사용해 리전 및 자격 증명 설정 후 빌드
+        return S3Client.builder()
+                .region(Region.of(region)) // AWS 리전 설정
+                .credentialsProvider(StaticCredentialsProvider.create(awsCreds)) // 자격 증명 설정
                 .build();
     }
 }
