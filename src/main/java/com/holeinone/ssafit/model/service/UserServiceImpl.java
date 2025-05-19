@@ -120,4 +120,16 @@ public class UserServiceImpl implements UserService {
     public List<User> getAllUsers() {
         return userDao.findAllUsers();
     }
+
+    @Override
+    public void deleteAccountByUsername(String username) {
+        User user = userDao.findByUsername(username);
+
+        if(user == null) {
+            throw new RuntimeException("존재하지 않는 사용자입니다.");
+        }
+
+        user.setIsActive(false);
+        userDao.updateState(user);
+    }
 }
