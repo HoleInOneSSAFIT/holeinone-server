@@ -6,6 +6,7 @@ import com.holeinone.ssafit.security.JwtUtil;
 import java.nio.file.AccessDeniedException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -113,5 +114,10 @@ public class UserServiceImpl implements UserService {
 
         user.setIsActive(false); // soft delete
         userDao.updateState(user);
+    }
+
+    @Override
+    public List<User> getAllUsers() {
+        return userDao.findAllUsers();
     }
 }
