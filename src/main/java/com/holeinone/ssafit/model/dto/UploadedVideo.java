@@ -16,6 +16,7 @@ public class UploadedVideo {
     private String videoUrl; // S3에 업로드된 URL
     private String originalFilename; // 업로드된 파일의 원래 이름
     private String title; // 영상 제목 (선택 입력 가능)
+    private Integer restSecondsAfter; //운동 후 쉬는 시간
     private String part; // 운동 부위
     private Integer durationSeconds; // 영상 길이 (초 단위)
     private LocalDateTime createdAt; // 등록일 (기본값: 현재 시간)

@@ -1,7 +1,9 @@
 package com.holeinone.ssafit.model.service;
 
+import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dto.UploadedVideo;
 import com.holeinone.ssafit.model.dto.YoutubeVideo;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
@@ -18,4 +20,7 @@ public interface VideoService {
 
     //영상 직접 업로드
     UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo);
+
+    //내가 올린 유튜브 url
+    YoutubeVideo directYoutubeUrl(String url, String part, int sequence ,int restSecondsAfter) throws CustomException;
 }

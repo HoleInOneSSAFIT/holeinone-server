@@ -3,7 +3,7 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.holeinone.ssafit.model.dao.VideoDao">
 
-    <!--유튜브 랜덤 영상 저장-->
+    <!--유튜브 영상 저장-->
     <insert id="insertVideoRoutine" parameterType="YoutubeVideo" useGeneratedKeys="true" keyProperty="youtubeVideoId">
         INSERT INTO youtube_video (
             source_type,
@@ -89,5 +89,12 @@
                      #{sequenceOrder}
                  )
     </insert>
+
+    <!--저장한 유튜브 객체 반환(아이디를 통해 조회)-->
+    <select id="selectYoutubeVideoById" resultType="YoutubeVideo">
+        SELECT *
+        FROM youtube_video
+        WHERE youtube_video_id = #{youtubeVideoId}
+    </select>
 
 </mapper>

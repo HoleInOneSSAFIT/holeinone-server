@@ -21,4 +21,7 @@ public interface VideoDao {
 
     //운동-루틴 매핑(유튜브)
     int insertRoutineUploadedVideo(RoutineVideo rv);
+
+    //저장한 유튜브 객체 반환(아이디를 통해 조회)
+    YoutubeVideo selectYoutubeVideoById(int youtubeVideoResultId);
 }
