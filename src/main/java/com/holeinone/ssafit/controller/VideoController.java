@@ -1,5 +1,6 @@
 package com.holeinone.ssafit.controller;
 
+import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dto.UploadedVideo;
 import com.holeinone.ssafit.model.dto.VideoRoutineSessionData;
 import com.holeinone.ssafit.model.dto.YoutubeVideo;
@@ -88,7 +89,7 @@ public class VideoController {
      **/
     @GetMapping("/reSearch")
     public YoutubeVideo reSearchYoutubeVideos(@RequestParam long youtubeVideoId, HttpSession session) {
-        
+
         //세션에 담은 랜덤 유튜브 영상 list 꺼내오기
         VideoRoutineSessionData videoList = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
 
@@ -116,7 +117,7 @@ public class VideoController {
         return nextVideo;
 
     }
-    
+
     //랜덤으로 담은 유튜브 영상 중 하나를 선택하고자 할 때
     @GetMapping("/youtubeSelect")
     public String youtubeSelect(@RequestParam long youtubeVideoId, @RequestParam int sequence, HttpSession session) {
@@ -159,17 +160,17 @@ public class VideoController {
 
         return "";
     }
-    
+
     /**
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
-     * **/
+     **/
     //루틴에 영상들 저장하기
     @PostMapping("/insertVideoRoutine")
     public String insertVideo(HttpSession session, @RequestParam String routineTitle, @RequestParam String routineContent) {
 
         //운동 루틴 영상들 임시 저장소
         VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
-        
+
         //유튜브 리스트와 업로드 리스트 꺼내오기, 없다면 null로 유지
         List<YoutubeVideo> youtubeVideoList = routineData != null ? routineData.getYoutubeVideoList() : null;
         List<UploadedVideo> uploadedVideoList = routineData != null ? routineData.getUploadVideoList() : null;
@@ -186,7 +187,7 @@ public class VideoController {
                 youtubeVideo.setYoutubeVideoId(0L);
             }
         }
-        
+
         //운동 루틴 저장하기
         int result = videoService.insertVideoRoutine(
                 youtubeVideoList != null ? youtubeVideoList : Collections.emptyList(),
@@ -206,18 +207,19 @@ public class VideoController {
     //내가 찍은 영상 올리기
     @PostMapping("/myUpload")
     public ResponseEntity<UploadedVideo> uploadVideo(@RequestParam("file") MultipartFile file,
-                                                     @RequestParam String title,
-                                                     @RequestParam String part,
-                                                     @RequestParam int durationSeconds,
-                                                     @RequestParam int sequence,
+                                                     @RequestParam("title") String title,
+                                                     @RequestParam("part") String part,
+                                                     @RequestParam("durationSeconds") int durationSeconds,
+                                                     @RequestParam("sequence") int sequence,
+                                                     @RequestParam("restSecondsAfter") int restSecondsAfter,
                                                      HttpSession session) {
 
         UploadedVideo uploadedVideo = new UploadedVideo();
         uploadedVideo.setTitle(title);
         uploadedVideo.setPart(part);
         uploadedVideo.setDurationSeconds(durationSeconds);
-        System.out.println(sequence);
         uploadedVideo.setUploadedSequence(sequence);
+        uploadedVideo.setRestSecondsAfter(restSecondsAfter);
 
         //영상 S3에 저장하러가기
         UploadedVideo videoDTO = videoService.uploadVideo(file, uploadedVideo);
@@ -240,9 +242,50 @@ public class VideoController {
 
         VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
 
-        log.info("루틴 영상 리스트 : {}, 사이즈 : {} ", result , (result.getYoutubeVideoList().size() + result.getUploadVideoList().size()));
+        log.info("루틴 영상 리스트 : {}, 사이즈 : {} ", result, (result.getYoutubeVideoList().size() + result.getUploadVideoList().size()));
 
         return ResponseEntity.ok(videoDTO);
     }
 
+
+    //내가 유튜브 url 직접 입력
+    @PostMapping("/directYoutubeUrl")
+    public ResponseEntity<?> directYoutubeUrl(@RequestParam("url") String url,
+                                              @RequestParam("part") String part,
+                                              @RequestParam("sequence") int sequence,
+                                              @RequestParam("restSecondsAfter") int restSecondsAfter,
+                                              HttpSession session) throws CustomException {
+
+        //내가 올린 유튜브 url
+        YoutubeVideo directYoutubeVideo;
+        try {
+            directYoutubeVideo = videoService.directYoutubeUrl(url, part, sequence, restSecondsAfter);
+        } catch (CustomException e) {
+            // 예외 발생 시 메시지와 상태 코드 반환
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            // 그 외 서버 에러
+            return ResponseEntity.status(500).body("서버 오류가 발생했습니다.");
+        }
+
+        // 세션에서 리스트 꺼내기
+        VideoRoutineSessionData videoList = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        // 비어있으면 새 리스트 생성
+        if (videoList == null) {
+            videoList = new VideoRoutineSessionData();
+        }
+
+        videoList.getYoutubeVideoList().add(directYoutubeVideo);
+
+        // 세션에 다시 저장
+        session.setAttribute("videoRoutineResult", videoList);
+
+        VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        log.info("루틴 영상 리스트 : {}, 사이즈 : {} ", result, (result.getYoutubeVideoList().size() + result.getUploadVideoList().size()));
+
+        //저장한 유튜브 url 반환
+        return ResponseEntity.ok(directYoutubeVideo);
+    }
 }
