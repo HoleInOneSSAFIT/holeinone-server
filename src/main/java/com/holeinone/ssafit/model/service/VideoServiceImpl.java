@@ -212,9 +212,12 @@ public class VideoServiceImpl implements VideoService {
         routine.setIsShared(false); // 기본 비공유
         routine.setRoutineTitle(routineTitle); //루틴 제목
         routine.setRoutineContent(routineContent); //루틴 내용
+        routine.setUserId((long)5); //임시 데이터
 
         //1. 운동 루틴 생성 -> 아이디 반환
         long routineId = videoDao.createRoutine(routine);
+
+        log.info("루틴 아이디 {} ", routine.getRoutineId());
 
         //2. 유튜브 영상 저장(유튜브 영상이 있다면)
         if(youtubeVideoList != null) {
@@ -224,11 +227,11 @@ public class VideoServiceImpl implements VideoService {
 
                 RoutineVideo rv = new RoutineVideo();
                 rv.setSequenceOrder(youtubeVideo.getYoutubeSequence()); //영상 순서 저장
-                rv.setRoutineId(routineId); //루틴 아이디 저장
+                rv.setRoutineId(routine.getRoutineId()); //루틴 아이디 저장
                 rv.setYoutubeVideoId(youtubeVideo.getYoutubeVideoId()); //유튜브 아이디 저장
 
                 //영상-루틴 매핑 저장
-                result += videoDao.insertRoutineVideo(rv);
+                result += videoDao.insertRoutineYoutubeVideo(rv);
             }
         }
 
@@ -241,11 +244,11 @@ public class VideoServiceImpl implements VideoService {
 
                 RoutineVideo rv = new RoutineVideo();
                 rv.setSequenceOrder(uploadedVideo.getUploadedSequence()); //영상 순서 저장
-                rv.setRoutineId(routineId);
+                rv.setRoutineId(routine.getRoutineId());
                 rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId());
 
 
-                result += videoDao.insertRoutineVideo(rv);
+                result += videoDao.insertRoutineUploadedVideo(rv);
             }
         }
 
