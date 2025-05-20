@@ -13,6 +13,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
+@CrossOrigin("*")
 public class AdminController {
 
     private final UserService userService;
@@ -48,7 +49,7 @@ public class AdminController {
         // jwtUtil에서 role 추출
         String role = jwtUtil.extractUserRole(token);
 
-        if (!role.equals("ADMIN")) {
+        if (!role.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("관리자 권한이 필요합니다.");
         }
     }

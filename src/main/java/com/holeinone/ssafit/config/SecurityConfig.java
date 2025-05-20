@@ -38,8 +38,8 @@ public class SecurityConfig {
                     } else {
                         auth.requestMatchers(PUBLIC_URLS).permitAll() // 일단 전체 허용한 상태
 //                                .requestMatchers(HttpMethod.GET, "/api/videos/**").permitAll()
-//                                .requestMatchers("/api/videos/**").hasAnyRole("USER", "ADMIN")
-//                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+//                                .requestMatchers("/api/videos/**").hasAnyRole("ROLE_USER", "ROLE_ADMIN")
+//                                .requestMatchers("/api/admin/**").hasRole("ROLE_ADMIN")
                                 .anyRequest().authenticated();
                     }
                 })

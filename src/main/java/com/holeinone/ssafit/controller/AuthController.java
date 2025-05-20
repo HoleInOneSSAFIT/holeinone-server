@@ -13,19 +13,13 @@ import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
+@CrossOrigin("*")
 public class AuthController {
 
     private final UserService userService;
@@ -104,6 +98,18 @@ public class AuthController {
                 .build();
     }
 
+    // 정보 보여주기 - info page
+    @GetMapping("/info")
+    public ResponseEntity<User> getInfo(@RequestHeader("Authorization") String token) throws AccessDeniedException {
+        if(token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        User user = userService.getInfo(token);
+
+        return ResponseEntity.ok(user);
+    }
+
     // 정보 수정
     @PutMapping("/update")
     public ResponseEntity<String> update(@RequestBody User user, @RequestHeader("Authorization") String token)
@@ -119,7 +125,7 @@ public class AuthController {
         return ResponseEntity.ok("수정이 완료되었습니다.");
     }
 
-    // 회원 탈퇴 - 본인 탈퇴 
+    // 회원 탈퇴
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteAccount(@RequestHeader("Authorization") String token)
             throws AccessDeniedException {

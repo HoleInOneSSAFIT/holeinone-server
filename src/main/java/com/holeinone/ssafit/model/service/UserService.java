@@ -10,6 +10,7 @@ public interface UserService {
     Map<String, String> login(String username, String password);
     void logout(String refreshToken);
     Map<String, String> rotate(String refreshToken);
+    User getInfo(String token);
     void update(User user, String token) throws AccessDeniedException;
     void deleteAccount(String token) throws AccessDeniedException;
     List<User> getAllUsers();
