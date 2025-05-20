@@ -26,7 +26,7 @@ public class UserServiceImpl implements UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         // role은 User로 고정 - 탈취 방지
-        user.setRole("USER");
+        user.setRole("ROLE_USER");
 
         user.setIsActive(true);
         user.setJoinedAt(new Date());
@@ -89,7 +89,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void update(User user, String token) throws AccessDeniedException {
+    public User getInfo(String token) {
+        String name = jwtUtil.extractUsername(token);
+
+        return userDao.findByUsername(name);
+    }
+
+    @Override
+    public void update(User user, String token) {
         String username = jwtUtil.extractUsername(token);
 
         // user에 username 강제로 설정함(프론트에서 username 넘겨주지 않아도 됨)
@@ -104,7 +111,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void deleteAccount(String token) throws AccessDeniedException {
+    public void deleteAccount(String token) {
         String username = jwtUtil.extractUsername(token);
         User user = userDao.findByUsername(username);
 
@@ -119,6 +126,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userDao.findAllUsers();
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userDao.findByUsername(username);
     }
 
     @Override
