@@ -27,6 +27,14 @@ public class AdminController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    // 특정 회원 조회 - 탈퇴한 사람도 정보 보이게?
+    @GetMapping("/users/{username}")
+    public ResponseEntity<User> getUser(@RequestHeader("Authorization") String auth, @PathVariable String username) {
+        checkAdmin(auth);
+
+        return ResponseEntity.ok(userService.getUserByUsername(username));
+    }
+
     // 특정 회원 탈퇴
     @DeleteMapping("/users/{username}")
     public ResponseEntity<String> deleteUser(@RequestHeader("Authorization") String auth, @PathVariable String username) {

@@ -90,9 +90,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User getInfo(String token) {
-        String username = jwtUtil.extractUsername(token);
+        String name = jwtUtil.extractUsername(token);
 
-        return userDao.findByUsername(username);
+        return userDao.findByUsername(name);
     }
 
     @Override
@@ -126,6 +126,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsers() {
         return userDao.findAllUsers();
+    }
+
+    @Override
+    public User getUserByUsername(String username) {
+        return userDao.findByUsername(username);
     }
 
     @Override

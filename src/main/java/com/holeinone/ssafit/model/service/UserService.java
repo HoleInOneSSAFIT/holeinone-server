@@ -14,5 +14,6 @@ public interface UserService {
     void update(User user, String token) throws AccessDeniedException;
     void deleteAccount(String token) throws AccessDeniedException;
     List<User> getAllUsers();
+    User getUserByUsername(String username);
     void deleteAccountByUsername(String username);
 }
