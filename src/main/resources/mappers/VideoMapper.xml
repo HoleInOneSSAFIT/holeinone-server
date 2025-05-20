@@ -29,7 +29,7 @@
     </insert>
 
     <!-- 업로드 영상 저장 -->
-    <insert id="insertUploadedVideo" parameterType="UploadedVideoDTO" useGeneratedKeys="true" keyProperty="uploadedVideoId">
+    <insert id="insertUploadedVideo" parameterType="UploadedVideo" useGeneratedKeys="true" keyProperty="uploadedVideoId">
         INSERT INTO uploaded_video (
             video_url,
             original_filename,
@@ -53,9 +53,13 @@
     <insert id="createRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
         INSERT INTO routine (
             is_shared,
+            routine_title,
+            routine_content,
             user_id
         ) VALUES (
                      #{isShared},
+                     #{routineTitle},
+                     #{routineContent},
                      #{userId}
                  )
     </insert>
@@ -74,7 +78,7 @@
     </insert>
 
     <!-- 루틴-영상 매핑 저장 : 업로드 영상용 -->
-    <insert id="insertRoutineUploadedVideo" parameterType="UploadVideo">
+    <insert id="insertRoutineUploadedVideo" parameterType="UploadedVideo">
         INSERT INTO routine_video (
             routine_id,
             uploaded_video_id,

@@ -20,7 +20,7 @@ public class UploadedVideo {
     private Integer durationSeconds; // 영상 길이 (초 단위)
     private LocalDateTime createdAt; // 등록일 (기본값: 현재 시간)
     private LocalDateTime updatedAt; // 수정일 (업데이트 시 자동 변경)
-    private Integer uploadSequence; //영상 순서
+    private Integer uploadedSequence; //영상 순서
     private Long userId; // 업로드한 사용자 ID (FK)
 
 }

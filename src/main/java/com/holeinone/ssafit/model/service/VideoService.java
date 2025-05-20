@@ -1,7 +1,6 @@
 package com.holeinone.ssafit.model.service;
 
 import com.holeinone.ssafit.model.dto.UploadedVideo;
-import com.holeinone.ssafit.model.dto.VideoRoutineRequest;
 import com.holeinone.ssafit.model.dto.YoutubeVideo;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,7 +12,9 @@ public interface VideoService {
     List<YoutubeVideo> searchVideos(String part, String duration, String recommend);
     
     //루틴에 우동 영상 저장하기
-    int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList, List<UploadedVideo> uploadedVideoList);
+    int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
+                           List<UploadedVideo> uploadedVideoList,
+                           String routineTitle, String routineContent);
 
     //영상 직접 업로드
     UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo);

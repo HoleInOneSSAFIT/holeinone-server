@@ -61,8 +61,9 @@ public class VideoServiceImpl implements VideoService {
             // 페이징 처리를 위한 변수들
             String nextPageToken = null; //다음 페이지 토큰 저장용 변수, YouTube API는 검색 페이지를 여러 페이지로 나눠서 줌
             int totalResultsFetched = 0; //지금까지 몇 개의 영상을 가져왔는지 카운팅
-            final long MAX_RESULTS_PER_REQUEST = 50; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
-            final int MAX_TOTAL_RESULTS = 200; //최종적으로 몇개의 영상을 가져올지
+            //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!50
+            final long MAX_RESULTS_PER_REQUEST = 30; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
+            final int MAX_TOTAL_RESULTS = 100; //최종적으로 몇개의 영상을 가져올지
 
             // 페이징을 위한 do-while 루프
             do {
@@ -101,7 +102,7 @@ public class VideoServiceImpl implements VideoService {
                     List<YoutubeVideo> filtered = filterVideosByDuration(part,youtubeService, searchResultList, duration);
                     videos.addAll(filtered);  // 필터링된 영상 리스트 누적 추가
                     totalResultsFetched += searchResultList.size();  // 현재까지 가져온 개수 카운트
-                    System.out.println("현재까지 영상 개수: " + videos.size());  // 진행상황 출력
+                    log.info("현재까지 영상 개수: {}",  videos.size()); // 진행상황 출력
                 }
 
                 // 다음 페이지 토큰 만들어줌
@@ -176,8 +177,6 @@ public class VideoServiceImpl implements VideoService {
                     youtubeVideo.setUserId(null); // 유튜브 영상은 사용자 업로드가 아니므로 null
 
                     filteredVideos.add(youtubeVideo);
-
-                    //System.out.println(title + " (https://www.youtube.com/watch?v=" + videoId  + ")" + " duration : "  + isoDuration);
                     log.info("videoId = {}, duration = {}", videoId, isoDuration);
                 }
             }
@@ -202,14 +201,17 @@ public class VideoServiceImpl implements VideoService {
     //루틴 운동 영상 저장하기
     @Transactional
     @Override
-    public int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList, List<UploadedVideo> uploadedVideoList) {
+    public int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
+                                  List<UploadedVideo> uploadedVideoList,
+                                  String routineTitle, String routineContent) {
 
         int result = 0;
 
         // 루틴 객체 생성 및 insert
         Routine routine = new Routine();
-        routine.setUserId((long)2313); //임의로 생성한 유저 아이디
         routine.setIsShared(false); // 기본 비공유
+        routine.setRoutineTitle(routineTitle); //루틴 제목
+        routine.setRoutineContent(routineContent); //루틴 내용
 
         //1. 운동 루틴 생성 -> 아이디 반환
         long routineId = videoDao.createRoutine(routine);
@@ -238,7 +240,7 @@ public class VideoServiceImpl implements VideoService {
                 videoDao.insertUploadedRoutine(uploadedVideo);
 
                 RoutineVideo rv = new RoutineVideo();
-                rv.setSequenceOrder(uploadedVideo.getUploadSequence()); //영상 순서 저장
+                rv.setSequenceOrder(uploadedVideo.getUploadedSequence()); //영상 순서 저장
                 rv.setRoutineId(routineId);
                 rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId());
 
@@ -260,16 +262,11 @@ public class VideoServiceImpl implements VideoService {
             //S3 업로드
             String videoUrl = s3Uploader.upload(file, "uploaded-videos");
 
-            UploadedVideo videoDTO = new UploadedVideo();
-            videoDTO.setVideoUrl(videoUrl); //비디오 url 저장
-            videoDTO.setOriginalFilename(file.getOriginalFilename()); //파일 기존 이름
-            videoDTO.setTitle(uploadedVideo.getTitle()); //영상 제목
-            videoDTO.setPart(uploadedVideo.getPart()); //영상 부위
-            videoDTO.setDurationSeconds(uploadedVideo.getDurationSeconds()); //영상 길이
-
+            uploadedVideo.setVideoUrl(videoUrl); //비디오 url 저장
+            uploadedVideo.setOriginalFilename(file.getOriginalFilename()); //파일 기존 이름
 
             //영상 저장(s3 업로드, db저장 x)
-            return videoDTO;
+            return uploadedVideo;
 
         } catch (IOException e) {
             throw new RuntimeException(e);
