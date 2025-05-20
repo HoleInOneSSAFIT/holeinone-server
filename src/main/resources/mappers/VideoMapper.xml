@@ -1,6 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.holeinone.ssafit.model.dao.UserDao">
+<mapper namespace="com.holeinone.ssafit.model.dao.VideoDao">
+
+    <!--유튜브 랜덤 영상 저장-->
+    <insert id="insertVideoRoutine" parameterType="YoutubeVideo" useGeneratedKeys="true" keyProperty="videoId">
+        INSERT INTO youtube_video (
+            source_type,
+            video_url,
+            title,
+            duration_seconds,
+            channel_name,
+            rest_seconds_after,
+            part,
+            youtube_sequence,
+            user_id
+        ) VALUES (
+                     #{sourceType},
+                     #{videoUrl},
+                     #{title},
+                     #{durationSeconds},
+                     #{channelName},
+                     #{restSecondsAfter},
+                     #{part},
+                     #{youtubeSequence},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 업로드 영상 저장 -->
+    <insert id="insertUploadedVideo" parameterType="UploadedVideo" useGeneratedKeys="true" keyProperty="uploadedVideoId">
+        INSERT INTO uploaded_video (
+            video_url,
+            original_filename,
+            title,
+            part,
+            duration_seconds,
+            uploaded_sequence,
+            user_id
+        ) VALUES (
+                     #{videoUrl},
+                     #{originalFilename},
+                     #{title},
+                     #{part},
+                     #{durationSeconds},
+                     #{uploadedSequence},
+                     #{userId}
+                 )
+    </insert>
+
+    <!--운동 루틴 아이디 생성-->
+    <insert id="createRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
+        INSERT INTO routine (
+            is_shared,
+            routine_title,
+            routine_content,
+            user_id
+        ) VALUES (
+                     #{isShared},
+                     #{routineTitle},
+                     #{routineContent},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 저장 : 유튜브 영상용 -->
+    <insert id="insertRoutineYoutubeVideo" parameterType="YoutubeVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            youtube_video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{youtubeVideoId},
+                     #{sequenceOrder}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 저장 : 업로드 영상용 -->
+    <insert id="insertRoutineUploadedVideo" parameterType="UploadedVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            uploaded_video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{uploadedVideoId},
+                     #{sequenceOrder}
+                 )
+    </insert>
 
 </mapper>
