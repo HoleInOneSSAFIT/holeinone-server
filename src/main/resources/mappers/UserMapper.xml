@@ -3,4 +3,45 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.holeinone.ssafit.model.dao.UserDao">
 
+    <insert id="save" parameterType="User">
+        INSERT INTO user (username, password, name, nickname, profile_image, gender, birthdate, height, weight, joined_at, is_active, role, refresh_token)
+        VALUES (#{username}, #{password}, #{name}, #{nickname}, #{profileImage}, #{gender}, #{birthdate}, #{height}, #{weight}, NOW(), #{isActive}, #{role}, #{refreshToken})
+    </insert>
+
+    <select id="findByUsername" parameterType="string" resultType="User">
+        SELECT * FROM user WHERE username = #{username} AND is_active = 1
+    </select>
+
+    <update id="updateRefreshToken">
+        UPDATE user
+        SET refresh_token = #{refreshToken}
+        WHERE username = #{username}
+    </update>
+
+    <update id="deleteRefreshToken">
+        UPDATE user
+        SET refresh_token = NULL
+        WHERE refresh_token = #{refreshToken}
+    </update>
+
+    <select id="findByRefreshToken" parameterType="string" resultType="User">
+        SELECT * FROM user WHERE refresh_token = #{refreshToken}
+    </select>
+
+    <update id="update" parameterType="User">
+        UPDATE user
+        SET profile_image = #{profileImage}, password = #{password}, nickname = #{nickname}, height = #{height}, weight = #{weight}
+        WHERE username = #{username}
+    </update>
+
+    <update id="updateState" parameterType="User">
+        UPDATE user
+        SET is_active = #{isActive}
+        WHERE username = #{username}
+    </update>
+
+    <select id="findAllUsers" resultType="User">
+        SELECT * FROM user;
+    </select>
+
 </mapper>
