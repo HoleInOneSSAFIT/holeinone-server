@@ -46,5 +46,15 @@ public class PostController {
         return ResponseEntity.ok("");
     }
 
+    //게시글 상세 조회
+    @GetMapping("/{postId}")
+    public ResponseEntity<?> getPostDetailById(@PathVariable Long postId) {
+
+        //루틴 아이디를 통해 루틴 영상 정보 조회
+        List<VideoRoutineSessionData> routineVideoList = postService.getRoutineById(postId);
+
+        return ResponseEntity.ok("");
+    }
+
 
 }
