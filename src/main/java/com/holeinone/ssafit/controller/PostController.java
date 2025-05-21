@@ -1,18 +1,19 @@
 package com.holeinone.ssafit.controller;
 
 import com.holeinone.ssafit.model.dto.Post;
+import com.holeinone.ssafit.model.dto.PostDetailInfo;
 import com.holeinone.ssafit.model.dto.RoutineVideo;
 import com.holeinone.ssafit.model.dto.VideoRoutineSessionData;
 import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.VideoService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RequiredArgsConstructor
@@ -32,6 +33,17 @@ public class PostController {
         List<VideoRoutineSessionData> routineVideoList = postService.getRoutineById(routineId);
         
         return ResponseEntity.ok(routineVideoList);
+    }
+
+    //게시글 등록( 텍스트 필드 + 파일을 한꺼번에 받을 때 명시)
+    @PostMapping(value = "/insert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> postRoutine(@ModelAttribute PostDetailInfo postDetailInfo) {
+        
+        // 게시글 정보 전달 후 게시글에 해당하는 정보 얻어오기
+        List<PostDetailInfo> postDetailInfoResult = postService.postRoutine(postDetailInfo);
+
+
+        return ResponseEntity.ok("");
     }
 
 

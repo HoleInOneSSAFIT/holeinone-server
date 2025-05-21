@@ -3,13 +3,13 @@ package com.holeinone.ssafit.model.service;
 import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dao.PostDao;
 import com.holeinone.ssafit.model.dao.VideoDao;
-import com.holeinone.ssafit.model.dto.RoutineVideo;
-import com.holeinone.ssafit.model.dto.UploadedVideo;
-import com.holeinone.ssafit.model.dto.VideoRoutineSessionData;
-import com.holeinone.ssafit.model.dto.YoutubeVideo;
+import com.holeinone.ssafit.model.dto.*;
+import com.holeinone.ssafit.util.S3Uploader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 @Slf4j
@@ -17,9 +17,11 @@ import java.util.List;
 public class PostServiceImpl implements PostService{
 
     private final PostDao postDao;
+    private final S3Uploader s3Uploader;
 
-    public PostServiceImpl(PostDao postDao) {
+    public PostServiceImpl(PostDao postDao, S3Uploader s3Uploader) {
         this.postDao = postDao;
+        this.s3Uploader = s3Uploader;
     }
 
     //루틴 아이디를 통해 루틴 영상 정보 조회
@@ -64,5 +66,78 @@ public class PostServiceImpl implements PostService{
 
         // 정상적인 경우 리스트로 반환
         return List.of(videoRoutineSessionData);
+    }
+
+    // 게시글 정보 전달 후 게시글에 해당하는 정보 얻어오기
+    @Override
+    public List<PostDetailInfo> postRoutine(PostDetailInfo postDetailInfo) {
+
+        int result = 0;
+
+        // 1. 게시글 정보 삽입(썸네일 url 나중에 저장)
+        Post postInfo = new Post();
+        postInfo.setTitle(postDetailInfo.getTitle()); //제목
+        postInfo.setContent(postDetailInfo.getContent()); //내용
+        postInfo.setUserId((long) 1); //유저 아이디(임시)
+        postInfo.setRoutineId(postDetailInfo.getRoutineId()); //루틴 아이디
+
+        //게시글 등록 하고 게시글 ID 반환받기
+        result = postDao.postRoutine(postInfo);
+
+        // 2. 썸네일 저장
+        if (postDetailInfo.getThumbnail() != null && !postDetailInfo.getThumbnail().isEmpty()) {
+            try {
+                String thumbnailUrl  = s3Uploader.upload(postDetailInfo.getThumbnail(), "post-thumbnail");
+                postInfo.setThumbnailUrl(thumbnailUrl);
+
+                //post 테이블 썸네일 url 등록
+                result = postDao.postRoutinethumbnailUrl(postInfo);
+                
+                //파일 테이블에 등록할 값 세팅
+                PostFile postFile = new PostFile();
+                postFile.setFileUrl(thumbnailUrl); //파일 URL
+                postFile.setOriginalFilename(postDetailInfo.getThumbnail().getOriginalFilename()); //파일 원본 이름
+                postFile.setFileType("THUMBNAIL_IMAGE"); //파일 타입
+                postFile.setPostId(postInfo.getPostId()); //게시글 아이디
+                
+                //게시글 파일 저장
+                result = postDao.postDaoFileInsert(postFile);
+
+
+            } catch (IOException e) {
+                throw new CustomException("썸네일 업로드 실패: " + e.getMessage());
+            }
+        }
+
+        // 3. 게시글 이미지/영상 저장
+        for (MultipartFile file : postDetailInfo.getFiles()) {
+            if (file.isEmpty()) continue; //첨부파일이 없으면 실행 안함
+
+            try { //게시글 첨부파일 올리기
+                String fileUrl = s3Uploader.upload(file, "post-files");
+                PostFile postFile = new PostFile();
+
+                //파일 테이블에 올릴 것
+                postFile.setFileUrl(fileUrl); //파일 url
+                postFile.setOriginalFilename(file.getOriginalFilename()); //파일 원본 이름
+                postFile.setPostId(postInfo.getPostId()); //게시글 아이디
+
+                //비디오인지 이미지인지 타입 정해야함
+                String contentType = file.getContentType();
+                if (contentType != null && contentType.startsWith("video")) {
+                    postFile.setFileType("POST_VIDEO");
+                } else {
+                    postFile.setFileType("POST_IMAGE");
+                }
+
+                //파일 테이블에 등록!!
+                result = postDao.postDaoFileInsert(postFile);
+
+            } catch (IOException e) {
+                throw new CustomException("파일 업로드 실패: " + e.getMessage());
+            }
+        }
+
+        return List.of();
     }
 }

@@ -24,4 +24,32 @@
         WHERE uploaded_video_id = #{uploadedVideoId}
     </select>
 
+    <!--게시글 등록하고 게시글 ID 반환-->
+    <insert id="postRoutine" parameterType="Post" useGeneratedKeys="true" keyProperty="postId">
+        INSERT INTO post (title, content, user_id, routine_id)
+        VALUES (#{title}, #{content}, #{userId}, #{routineId})
+    </insert>
+
+    <!--post 테이블 썸네일 url 추가 등록-->
+    <update id="postRoutinethumbnailUrl" parameterType="Post">
+        UPDATE post
+        SET thumbnail_url = #{thumbnailUrl}
+        WHERE post_id = #{postId}
+    </update>
+
+    <!--게시글 파일 저장-->
+    <insert id="postDaoFileInsert" parameterType="PostFile">
+        INSERT INTO post_file (
+            file_url,
+            original_filename,
+            file_type,
+            post_id
+        ) VALUES (
+                     #{fileUrl},
+                     #{originalFilename},
+                     #{fileType},
+                     #{postId}
+                 )
+    </insert>
+
 </mapper>
