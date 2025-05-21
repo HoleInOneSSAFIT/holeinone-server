@@ -27,8 +27,22 @@ public class AuthController {
     // 회원가입
     @PostMapping("/register")
     public ResponseEntity<String> register(@RequestBody User user) {
+        // 필수 항목 누락 체크
+        if (user.getProfileImage() == null || user.getUsername() == null || user.getPassword() == null
+                || user.getName() == null || user.getNickname() == null || user.getGender() == null || user.getBirthdate() == null) {
+            throw new IllegalArgumentException("필수 항목 입력이 누락되었습니다.");
+        }
+
         userService.register(user);
+
         return ResponseEntity.ok("회원가입 성공");
+    }
+
+    // 아이디 중복확인
+    @GetMapping("/check-username")
+    public ResponseEntity<Boolean> checkUsername(@RequestParam String username) {
+        boolean isDuplicate = userService.isUsernameExist(username);
+        return ResponseEntity.ok(isDuplicate); // true: 이미 있다, false: 없다
     }
 
     // 로그인
@@ -97,6 +111,10 @@ public class AuthController {
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + tokens.get("accessToken"))
                 .build();
     }
+
+    // 사용자가 작성한 게시글 목록
+    // 사용자가 작성한 댓글 목록
+    // 사용자가 좋아요 한 게시글 목록
 
     // 정보 보여주기 - info page
     @GetMapping("/info")
