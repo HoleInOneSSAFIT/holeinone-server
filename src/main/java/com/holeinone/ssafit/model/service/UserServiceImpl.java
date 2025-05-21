@@ -22,6 +22,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void register(User user) {
+        if(isUsernameExist(user.getUsername())) {
+            throw new IllegalArgumentException("이미 존재하는 아이디 입니다.");
+        }
+
         // 비밀번호 해싱
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
@@ -35,6 +39,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Boolean isUsernameExist(String username) {
+        return userDao.findByUsername(username) != null; // 이미 있다면 true
+    }
+
+    @Override
     public Map<String, String> login(String username, String password) {
         if (username == null || password == null) {
             throw new IllegalArgumentException("아이디 또는 비밀번호를 입력해주세요.");
@@ -45,7 +54,7 @@ public class UserServiceImpl implements UserService {
             throw new RuntimeException("아이디 또는 비밀번호가 잘못되었습니다.");
         }
 
-        // isActive로 탈퇴한 사람은 로그인 못하게 조건 걸어주기
+        // isActive가 false면 탈퇴한 상태
         if(!user.getIsActive()) {
             throw new RuntimeException("이미 탈퇴한 계정입니다.");
         }
@@ -61,8 +70,8 @@ public class UserServiceImpl implements UserService {
         tokens.put("accessToken", accessToken);
         tokens.put("refreshToken", refreshToken);
 
-        System.out.println("access_token = " + tokens.get("accessToken"));
-        System.out.println("refresh_token = " + tokens.get("refreshToken"));
+//        System.out.println("access_token = " + tokens.get("accessToken"));
+//        System.out.println("refresh_token = " + tokens.get("refreshToken"));
 
         return tokens;
     }

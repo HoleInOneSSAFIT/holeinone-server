@@ -19,6 +19,8 @@ public class AdminController {
     private final UserService userService;
     private final JwtUtil jwtUtil;
 
+    // 모든 게시글 조회
+
     // 모든 회원 조회
     @GetMapping("/users")
     public ResponseEntity<List<User>> getAllUsers(@RequestHeader("Authorization") String auth) {
@@ -27,7 +29,7 @@ public class AdminController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    // 특정 회원 조회 - 탈퇴한 사람도 정보 보이게?
+    // 특정 회원 조회(특정 회원 info page)
     @GetMapping("/users/{username}")
     public ResponseEntity<User> getUser(@RequestHeader("Authorization") String auth, @PathVariable String username) {
         checkAdmin(auth);
