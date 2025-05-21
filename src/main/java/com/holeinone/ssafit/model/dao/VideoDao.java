@@ -5,6 +5,8 @@ import com.holeinone.ssafit.model.dto.RoutineVideo;
 import com.holeinone.ssafit.model.dto.UploadedVideo;
 import com.holeinone.ssafit.model.dto.YoutubeVideo;
 
+import java.util.List;
+
 public interface VideoDao {
 
     //루틴에 유튜브 영상 저장하기
@@ -24,4 +26,6 @@ public interface VideoDao {
 
     //저장한 유튜브 객체 반환(아이디를 통해 조회)
     YoutubeVideo selectYoutubeVideoById(int youtubeVideoResultId);
+
+
 }
