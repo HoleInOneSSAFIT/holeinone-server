@@ -354,8 +354,10 @@ public class VideoServiceImpl implements VideoService {
             throw new CustomException("서버 오류가 발생했습니다.");
         }
     }
-    
-    
+
+
+
+
     //유튜브 url 아이디 추출
     private String extractVideoId(String url) {
 
@@ -383,5 +385,7 @@ public class VideoServiceImpl implements VideoService {
         return null;
 
     }
+
+
 
 }

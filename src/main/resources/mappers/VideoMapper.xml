@@ -97,4 +97,5 @@
         WHERE youtube_video_id = #{youtubeVideoId}
     </select>
 
+
 </mapper>

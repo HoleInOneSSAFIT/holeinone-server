@@ -3,4 +3,25 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.holeinone.ssafit.model.dao.PostDao">
 
+    <!--루틴 아이디를 통해 루틴 영상 정보 조회-->
+    <select id="getRoutineById" parameterType="long" resultType="RoutineVideo">
+        SELECT *
+        FROM routine_video
+        WHERE routine_id = #{routineId}
+    </select>
+
+    <!--루틴 아이디를 통해 유튜브 영상 정보 조회-->
+    <select id="getYoutubeById" parameterType="long" resultType="YoutubeVideo">
+        SELECT *
+        FROM youtube_video
+        WHERE youtube_video_id = #{youtubeVideoId}
+    </select>
+
+    <!--루틴 아이디를 통해 업로드 영상 정보 조회-->
+    <select id="getUploadById" parameterType="long" resultType="UploadedVideo">
+        SELECT *
+        FROM uploaded_video
+        WHERE uploaded_video_id = #{uploadedVideoId}
+    </select>
+
 </mapper>
