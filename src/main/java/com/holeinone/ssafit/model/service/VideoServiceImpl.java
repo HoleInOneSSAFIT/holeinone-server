@@ -1,5 +1,6 @@
 package com.holeinone.ssafit.model.service;
 
+import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dto.*;
 import com.holeinone.ssafit.util.S3Uploader;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,6 +12,7 @@ import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
 import com.holeinone.ssafit.model.dao.VideoDao;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -212,40 +215,48 @@ public class VideoServiceImpl implements VideoService {
         routine.setIsShared(false); // 기본 비공유
         routine.setRoutineTitle(routineTitle); //루틴 제목
         routine.setRoutineContent(routineContent); //루틴 내용
+        routine.setUserId((long)1); //임시 데이터
+
+        log.info("유저 아이디 {} ", routine.getUserId());
 
         //1. 운동 루틴 생성 -> 아이디 반환
-        long routineId = videoDao.createRoutine(routine);
+        videoDao.createRoutine(routine);
+
+        long routineId = routine.getRoutineId(); // 루틴 ID가 있음
+
+        log.info("루틴 아이디 {} ", routineId);
 
         //2. 유튜브 영상 저장(유튜브 영상이 있다면)
         if(youtubeVideoList != null) {
             for (YoutubeVideo youtubeVideo : youtubeVideoList) {
+                youtubeVideo.setUserId(routine.getUserId()); //유저 아이디 저장
                 // YoutubeVideo 저장
                 videoDao.insertVideoRoutine(youtubeVideo);
 
                 RoutineVideo rv = new RoutineVideo();
                 rv.setSequenceOrder(youtubeVideo.getYoutubeSequence()); //영상 순서 저장
-                rv.setRoutineId(routineId); //루틴 아이디 저장
+                rv.setRoutineId(routine.getRoutineId()); //루틴 아이디 저장
                 rv.setYoutubeVideoId(youtubeVideo.getYoutubeVideoId()); //유튜브 아이디 저장
 
                 //영상-루틴 매핑 저장
-                result += videoDao.insertRoutineVideo(rv);
+                result += videoDao.insertRoutineYoutubeVideo(rv);
             }
         }
 
         // 3. 업로드 영상 저장
         if (uploadedVideoList != null) {
             for (UploadedVideo uploadedVideo : uploadedVideoList) {
-
+                uploadedVideo.setUserId(routine.getUserId()); //유저 아이디 저장
                 // UploadedVideo 저장
                 videoDao.insertUploadedRoutine(uploadedVideo);
 
                 RoutineVideo rv = new RoutineVideo();
                 rv.setSequenceOrder(uploadedVideo.getUploadedSequence()); //영상 순서 저장
-                rv.setRoutineId(routineId);
-                rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId());
+                rv.setRoutineId(routine.getRoutineId()); //루틴 아이디 저장
+                rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId()); //업로드 영상 아이디 저장
 
 
-                result += videoDao.insertRoutineVideo(rv);
+                result += videoDao.insertRoutineUploadedVideo(rv);
             }
         }
 
@@ -271,6 +282,105 @@ public class VideoServiceImpl implements VideoService {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+    }
+
+    //내가 올린 유튜브 영상
+    @Override
+    public YoutubeVideo directYoutubeUrl(String url, String part, int sequence, int restSecondsAfter) throws CustomException {
+        //1. 유튜브 url에서 아이디 추출
+        String videoId = extractVideoId(url);
+
+        //url이 없으면 유효하지 않다는 메시지 리턴
+        if (videoId == null) {
+            throw new CustomException("유효하지 않은 YouTube URL입니다.");
+        }
+
+        //2. YouTube API로 videoId 기반 영상 정보 조회
+        try {
+            // YouTube API 서비스 객체 생성
+            YouTube youtubeService = new YouTube.Builder(
+                    GoogleNetHttpTransport.newTrustedTransport(),
+                    GsonFactory.getDefaultInstance(),
+                    null)
+                    .setApplicationName("holeinone-ssafit")
+                    .build();
+
+            // videoId로 영상 상세 조회 요청 (snippet, contentDetails 포함)
+            YouTube.Videos.List videosList = youtubeService.videos()
+                    .list(List.of("snippet", "contentDetails"))
+                    .setId(List.of(videoId))
+                    .setKey(apiKey);
+
+            VideoListResponse videoResponse = videosList.execute();
+            List<Video> items = videoResponse.getItems();
+
+            if (items == null || items.isEmpty()) {
+                throw new CustomException("해당 영상 정보를 찾을 수 없습니다.");
+            }
+
+            Video video = items.get(0); //영상 리스트 중 첫 번째 영상 객체 꺼내기
+
+            // 영상 길이 초 단위 변환
+            long seconds = parseDurationToSeconds(video.getContentDetails().getDuration());
+
+            // YoutubeVideo DTO 생성
+            YoutubeVideo youtubeVideo = new YoutubeVideo();
+            youtubeVideo.setSourceType("MY_UPLOAD");
+            youtubeVideo.setVideoUrl(url);
+            youtubeVideo.setTitle(video.getSnippet().getTitle());
+            youtubeVideo.setDurationSeconds((int) seconds);
+            youtubeVideo.setChannelName(video.getSnippet().getChannelTitle());
+            youtubeVideo.setRestSecondsAfter(restSecondsAfter);
+            youtubeVideo.setPart(part);
+            youtubeVideo.setYoutubeSequence(sequence);
+            youtubeVideo.setUserId((long) 1); //임시 데이터
+
+            //유튜브 ID 값 반환 받기
+            int youtubeVideoResultId = videoDao.insertVideoRoutine(youtubeVideo);
+            log.info("유튜브 ID : {} ", youtubeVideo.getYoutubeVideoId());
+
+            //저장한 유튜브 객체 반환(아이디를 통해 조회)
+            YoutubeVideo savedVideo = videoDao.selectYoutubeVideoById(Math.toIntExact(youtubeVideo.getYoutubeVideoId()));
+
+            //저장한 영상 리턴
+            return savedVideo;
+
+        } catch (CustomException e) {
+            // CustomException은 그대로 던짐
+            throw e;
+        } catch (Exception e) {
+            log.error("YouTube 영상 조회 중 오류 발생: {}", e.getMessage(), e);
+            throw new CustomException("서버 오류가 발생했습니다.");
+        }
+    }
+    
+    
+    //유튜브 url 아이디 추출
+    private String extractVideoId(String url) {
+
+        try {
+            //1. 짧은 공유 URL 형식
+            if (url.contains("youtu.be/")) {
+                // https://youtu.be/VIDEO_ID, 마지막 '/' 이후의 문자열이 videoId
+                return url.substring(url.lastIndexOf("/") + 1);
+            //2. 표준 YouTube URL 형식
+            } else if (url.contains("watch?v=")) {
+                // https://www.youtube.com/watch?v=VIDEO_ID, , URL에서 쿼리 파라미터 부분만 추출 (? 이후)
+                String query = new URL(url).getQuery(); //쿼리 문자열 부분만 반환
+                for (String param : query.split("&")) { //여러개의 & 파라미터 나눔
+                    String[] pair = param.split("="); //= 기준으로 또 나눔
+                    if (pair[0].equals("v")) return pair[1]; //쪼갠 파라미터의 이름이 v면 파라미터의 값을 가져오기
+                }
+            //3. Shorts 영상 URL 형식
+            } else if (url.contains("/shorts/")) {
+                // https://www.youtube.com/shorts/VIDEO_ID, 마지막 '/' 이후의 문자열이 videoId
+                return url.substring(url.lastIndexOf("/") + 1);
+            }
+        } catch (Exception e) {
+            return null;
+        }
+        return null;
 
     }
 
