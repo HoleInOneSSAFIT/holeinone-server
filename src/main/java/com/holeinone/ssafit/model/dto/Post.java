@@ -1,10 +1,14 @@
 package com.holeinone.ssafit.model.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class Post {
 
     private Long postId; //게시글 ID
