@@ -171,18 +171,50 @@ public class VideoController {
     @GetMapping("/routineUpdate/{sequence}")
     public ResponseEntity<?>  routineUpdate(@PathVariable int sequence, HttpSession session) {
 
-        // 운동 루틴 영상들 임시 저장소 (null일 경우 실행 x)
-        VideoRoutineSessionData videoRoutineResult = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+        // 세션에서 루틴 데이터 꺼내기
+        VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
 
-        //유튜브 영상 수정
-        for (YoutubeVideo video : videoRoutineResult.getYoutubeVideoList()) {
-            if (video.getYoutubeSequence() == sequence) {
+        //세션에 루틴 데이터 자체가 없는 경우
+        if (routineData == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "루틴 정보가 없습니다.");
+        }
 
+        //유튜브 영상, 업로드 영상
+        List<YoutubeVideo> youtubeVideoList = routineData.getYoutubeVideoList();
+        List<UploadedVideo> uploadedVideoList = routineData.getUploadVideoList();
+
+        // 루틴은 있지만 안에 아무 영상도 담겨있지 않는 경우
+        if ((youtubeVideoList == null || youtubeVideoList.isEmpty()) &&
+                (uploadedVideoList == null || uploadedVideoList.isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제할 영상이 없습니다.");
+        }
+
+        // 유튜브 영상 삭제 및 순서 정렬
+        if (youtubeVideoList != null) {
+            // 삭제할 순서의 루틴 영상인 경우 삭제
+            youtubeVideoList.removeIf(video -> video.getYoutubeSequence() == sequence);
+            // 삭제 순서 이후의 영상들은 순서 -1 조정
+            for (YoutubeVideo video : youtubeVideoList) {
+                if (video.getYoutubeSequence() > sequence) {
+                    video.setYoutubeSequence(video.getYoutubeSequence() - 1);
+                }
             }
         }
 
+        // 업로드 영상 삭제 및 순서 정렬
+        if (uploadedVideoList != null) {
+            uploadedVideoList.removeIf(video -> video.getUploadedSequence() == sequence);
+            for (UploadedVideo video : uploadedVideoList) {
+                if (video.getUploadedSequence() > sequence) {
+                    video.setUploadedSequence(video.getUploadedSequence() - 1);
+                }
+            }
+        }
 
-        return ResponseEntity.ok("zz");
+        // 세션에 반영
+        session.setAttribute("videoRoutineResult", routineData);
+
+        return ResponseEntity.ok(routineData);
     }
 
 
@@ -224,6 +256,9 @@ public class VideoController {
                 uploadedVideoList != null ? uploadedVideoList : Collections.emptyList(),
                 routineTitle, routineContent
         );
+
+        //루틴 영상 세션 초기화
+        session.removeAttribute("videoRoutineResult");
 
         //영상 루틴 출력해줘야함
         return "";
