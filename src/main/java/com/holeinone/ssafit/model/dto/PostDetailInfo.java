@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.ArrayList;
 import java.util.List;
 
-//게시글 상세 페이지 정보
+//게시글 작성 페이지 정보
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
