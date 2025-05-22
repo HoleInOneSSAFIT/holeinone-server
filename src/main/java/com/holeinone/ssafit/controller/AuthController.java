@@ -1,14 +1,18 @@
 package com.holeinone.ssafit.controller;
 
+import com.holeinone.ssafit.model.dto.Post;
 import com.holeinone.ssafit.model.dto.User;
+import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.nio.file.AccessDeniedException;
+import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.Response;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -23,6 +27,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final UserService userService;
+    private final PostService postService;
 
     // 회원가입
     @PostMapping("/register")
@@ -118,7 +123,21 @@ public class AuthController {
                 .build();
     }
 
-    // 사용자가 작성한 게시글 목록
+    // 사용자 본인이 작성한 게시글 목록
+    @GetMapping("/postlist")
+    public ResponseEntity<List<Post>> getPostList(@RequestHeader("Authorization") String token) throws AccessDeniedException {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        User user = userService.getInfo(token);
+        Long userId = user.getUserId(); // token에서 가져온 정보에서 userId 추출
+
+        List<Post> postList = postService.getPostList(userId); // userId에 해당하는 게시글 목록 가져오기
+
+        return ResponseEntity.ok(postList);
+    }
+
     // 사용자가 작성한 댓글 목록
     // 사용자가 좋아요 한 게시글 목록
 

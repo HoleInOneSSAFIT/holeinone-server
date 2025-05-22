@@ -47,4 +47,8 @@ public interface PostDao {
     
     //게시글 전체 목록 조회
     List<Post> listPosts();
+
+    // userId로 본인이 작성한 게시글 목록 가져오기
+    List<Post> selectPostList(Long userId);
+
 }
