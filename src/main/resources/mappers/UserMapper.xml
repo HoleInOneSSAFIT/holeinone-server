@@ -12,6 +12,10 @@
         SELECT * FROM user WHERE username = #{username} AND is_active = 1
     </select>
 
+    <select id="findByNickname" parameterType="string" resultType="User">
+        SELECT * FROM user WHERE nickname = #{nickname} AND is_active = 1
+    </select>
+
     <update id="updateRefreshToken">
         UPDATE user
         SET refresh_token = #{refreshToken}

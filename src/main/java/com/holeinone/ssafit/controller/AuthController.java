@@ -45,6 +45,12 @@ public class AuthController {
         return ResponseEntity.ok(isDuplicate); // true: 이미 있다, false: 없다
     }
 
+    @GetMapping("/check-nickname")
+    public ResponseEntity<Boolean> checkNickname(@RequestParam String nickname) {
+        boolean isDuplicateNickname = userService.isNicknameExist(nickname);
+        return ResponseEntity.ok(isDuplicateNickname); // true: 이미 있다, false: 없다
+    }
+
     // 로그인
     @PostMapping("/login")
     public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> loginRequest) {

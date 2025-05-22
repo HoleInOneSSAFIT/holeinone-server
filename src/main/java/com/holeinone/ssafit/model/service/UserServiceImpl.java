@@ -44,6 +44,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Boolean isNicknameExist(String nickname) {
+        return userDao.findByNickname(nickname) != null; // 이미 있다면 true
+    }
+
+    @Override
     public Map<String, String> login(String username, String password) {
         if (username == null || password == null) {
             throw new IllegalArgumentException("아이디 또는 비밀번호를 입력해주세요.");
