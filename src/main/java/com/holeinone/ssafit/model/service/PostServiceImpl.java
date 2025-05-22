@@ -68,9 +68,9 @@ public class PostServiceImpl implements PostService{
         return List.of(videoRoutineSessionData);
     }
 
-    // 게시글 정보 전달 후 게시글에 해당하는 정보 얻어오기
+    // 게시글 정보 전달 후 게시글 아이디 반환
     @Override
-    public List<PostDetailInfo> postRoutine(PostDetailInfo postDetailInfo) {
+    public Long postRoutine(PostDetailInfo postDetailInfo) {
 
         int result = 0;
 
@@ -83,6 +83,9 @@ public class PostServiceImpl implements PostService{
 
         //게시글 등록 하고 게시글 ID 반환받기
         result = postDao.postRoutine(postInfo);
+
+        //루틴 공유 상태 true로 변경
+        postDao.postRoutineShared(postDetailInfo.getRoutineId());
 
         // 2. 썸네일 저장
         if (postDetailInfo.getThumbnail() != null && !postDetailInfo.getThumbnail().isEmpty()) {
@@ -138,6 +141,29 @@ public class PostServiceImpl implements PostService{
             }
         }
 
-        return List.of();
+        return postInfo.getPostId();
     }
+
+    // 게시글 상세 정보 가져오기
+    @Override
+    public Post getPost(Long postId) {
+
+        Post post = postDao.getPost(postId);
+        log.info("zzz: {}", post);
+
+        return postDao.getPost(postId);
+    }
+
+    // 게시글 파일 정보 가져오기
+    @Override
+    public List<PostFile> getFiles(Long postId) {
+        return postDao.getFiles(postId);
+    }
+
+    // 루틴 정보 가져오기
+    @Override
+    public Routine getRoutine(Long routineId) {
+        return postDao.getRoutine(routineId);
+    }
+
 }

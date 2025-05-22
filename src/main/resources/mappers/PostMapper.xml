@@ -30,6 +30,12 @@
         VALUES (#{title}, #{content}, #{userId}, #{routineId})
     </insert>
 
+    <update id="postRoutineShared" parameterType="long">
+        UPDATE routine
+        SET is_shared = true
+        WHERE routine_id = #{routineId}
+    </update>
+
     <!--post 테이블 썸네일 url 추가 등록-->
     <update id="postRoutinethumbnailUrl" parameterType="Post">
         UPDATE post
@@ -51,5 +57,26 @@
                      #{postId}
                  )
     </insert>
+
+    <!--게시글 상세 정보 가져오기-->
+    <select id="getPost" resultType="Post">
+        SELECT *
+        FROM post
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--게시글 파일 정보 가져오기-->
+    <select id="getFiles" resultType="PostFile">
+        SELECT *
+        FROM post_file
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--루틴 정보 가져오기-->
+    <select id="getRoutine" resultType="Routine">
+        SELECT *
+        FROM routine
+        WHERE routine_id = #{routineId}
+    </select>
 
 </mapper>

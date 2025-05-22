@@ -14,7 +14,7 @@ public interface VideoService {
     //유튜브 영상 검색
     List<YoutubeVideo> searchVideos(String part, String duration, String recommend);
     
-    //루틴에 우동 영상 저장하기
+    //루틴에 운동 영상 저장하기
     int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
                            List<UploadedVideo> uploadedVideoList,
                            String routineTitle, String routineContent);

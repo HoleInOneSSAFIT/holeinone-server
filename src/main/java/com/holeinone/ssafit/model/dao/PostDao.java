@@ -23,4 +23,16 @@ public interface PostDao {
     
     //게시글 파일 저장
     int postDaoFileInsert(PostFile postFile);
+
+    // 게시글 상세 정보 가져오기
+    Post getPost(Long postId);
+
+    // 게시글 파일 정보 가져오기
+    List<PostFile> getFiles(Long postId);
+
+    // 루틴 정보 가져오기
+    Routine getRoutine(Long routineId);
+
+    //루틴 공유 상태 ture로 변경
+    void postRoutineShared(Long routineId);
 }
