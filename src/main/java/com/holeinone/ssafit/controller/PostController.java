@@ -91,6 +91,15 @@ public class PostController {
         return ResponseEntity.ok("게시글 삭제 성공");
     }
 
+    //게시글 전체 목록
+    @GetMapping("/all")
+    public ResponseEntity<?> listPosts() {
+
+        List<Post> postList = postService.listPosts();
+
+        return ResponseEntity.ok(postList);
+    }
+
 
 
 }
