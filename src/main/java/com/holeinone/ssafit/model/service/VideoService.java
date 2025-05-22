@@ -25,4 +25,6 @@ public interface VideoService {
     //내가 올린 유튜브 url
     YoutubeVideo directYoutubeUrl(String url, String part, int sequence ,int restSecondsAfter) throws CustomException;
 
+    //루틴 아이디를 통해 루틴 삭제
+    int routineIdDelete(int routineId);
 }

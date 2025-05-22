@@ -355,8 +355,22 @@ public class VideoServiceImpl implements VideoService {
         }
     }
 
+    //루틴 아이디를 통해 루틴 삭제
+    @Override
+    public int routineIdDelete(int routineId) {
+
+        //1. s3에서 파일 삭제를 위해 게시글 파일, 유튜브 영상, 업로드 영상의 url을 받아와야한다
+        List<String> routineFileUrls = videoDao.routineFileUrl(routineId); //루틴 영상
+
+        List<String> routinePostFileUrls = videoDao.routinePostFileUrl(routineId); //게시글 파일
+
+        //2. 루틴 삭제-> 운동-루틴 삭제-> 게시글 삭제-> 게시글 파일 삭제-> 댓글 삭제
+
+        //3.유튜브 영상, 업로드 영상은 삭제
 
 
+        return 0;
+    }
 
     //유튜브 url 아이디 추출
     private String extractVideoId(String url) {

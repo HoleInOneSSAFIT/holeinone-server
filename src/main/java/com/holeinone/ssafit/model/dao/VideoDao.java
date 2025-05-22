@@ -27,5 +27,9 @@ public interface VideoDao {
     //저장한 유튜브 객체 반환(아이디를 통해 조회)
     YoutubeVideo selectYoutubeVideoById(int youtubeVideoResultId);
 
+    //루틴 삭제를 위한 s3 유튜브, 업로드 영상 url 조회
+    List<String> routineFileUrl(int routineId);
 
+    //루틴 삭제를 위한 s3 게시글 파일 url 조회
+    List<String> routinePostFileUrl(int routineId);
 }
