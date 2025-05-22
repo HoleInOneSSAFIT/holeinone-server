@@ -165,6 +165,32 @@ public class VideoController {
         return "";
     }
 
+    //운동 루틴 하나 정보 뿌리기
+
+    //운동 루틴 중 하나 삭제
+    @GetMapping("/routineUpdate/{sequence}")
+    public ResponseEntity<?>  routineUpdate(@PathVariable int sequence, HttpSession session) {
+
+        // 운동 루틴 영상들 임시 저장소 (null일 경우 실행 x)
+        VideoRoutineSessionData videoRoutineResult = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        //유튜브 영상 수정
+        for (YoutubeVideo video : videoRoutineResult.getYoutubeVideoList()) {
+            if (video.getYoutubeSequence() == sequence) {
+
+            }
+        }
+
+
+        return ResponseEntity.ok("zz");
+    }
+
+
+    //운동 루틴 중 하나 삭제
+    //세션에 담긴 루틴 전부 초기화
+
+
+
     /**
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
      **/
