@@ -25,6 +25,7 @@ public class S3Uploader {
         this.s3Client = s3Client;
     }
 
+    //파일 업로드
     public String upload(MultipartFile file, String dirName) throws IOException {
         // 파일명 중복 방지를 위해 UUID를 붙여 고유한 파일명 생성
         String fileName = dirName + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
@@ -43,4 +44,27 @@ public class S3Uploader {
         // 업로드된 파일의 URL을 생성하여 반환 (사용자가 접근할 수 있는 URL)
         return s3Client.utilities().getUrl(builder -> builder.bucket(bucket).key(fileName)).toString();
     }
+
+    //파일 삭제
+    public void delete(String fileUrl) {
+
+        String key = extractKeyFromUrl(fileUrl);
+
+        s3Client.deleteObject(builder ->
+                builder.bucket(bucket)
+                        .key(key)
+                        .build());
+    }
+
+    //파일 경로+파일명 추출
+    private String extractKeyFromUrl(String fileUrl) {
+        
+        //해당하지 않는 부분들 저장 후 그 부분만 전체 url 중에서 공백 처리
+        String baseUrl = "https://" + bucket + ".s3.amazonaws.com/";
+        return fileUrl.replace(baseUrl, "");
+    
+    }
+
+
+
 }

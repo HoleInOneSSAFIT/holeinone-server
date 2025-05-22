@@ -120,7 +120,10 @@ public class VideoController {
 
     //랜덤으로 담은 유튜브 영상 중 하나를 선택하고자 할 때
     @GetMapping("/youtubeSelect")
-    public String youtubeSelect(@RequestParam long youtubeVideoId, @RequestParam int sequence, HttpSession session) {
+    public String youtubeSelect(@RequestParam long youtubeVideoId,
+                                @RequestParam int sequence,
+                                @RequestParam int restSecondsAfter,
+                                HttpSession session) {
 
         // 유튜브 랜덤 영상 저장소
         VideoRoutineSessionData videoRoutineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
@@ -141,6 +144,7 @@ public class VideoController {
             for (YoutubeVideo video : videoRoutineData.getYoutubeVideoList()) {
                 if (video.getYoutubeVideoId() == youtubeVideoId) {
                     video.setYoutubeSequence(sequence); // 루틴 순서 지정
+                    video.setRestSecondsAfter(restSecondsAfter); //운동 후 쉬는 시간 지정
                     videoRoutineResult.getYoutubeVideoList().add(video); // 루틴 리스트에 추가
                     break;
                 }
@@ -219,6 +223,7 @@ public class VideoController {
         uploadedVideo.setPart(part);
         uploadedVideo.setDurationSeconds(durationSeconds);
         uploadedVideo.setUploadedSequence(sequence);
+        log.info("운동 후 쉬는 시간 : {}", restSecondsAfter);
         uploadedVideo.setRestSecondsAfter(restSecondsAfter);
 
         //영상 S3에 저장하러가기
@@ -255,6 +260,10 @@ public class VideoController {
                                               @RequestParam("sequence") int sequence,
                                               @RequestParam("restSecondsAfter") int restSecondsAfter,
                                               HttpSession session) throws CustomException {
+
+        System.out.println(restSecondsAfter);
+
+
 
         //내가 올린 유튜브 url
         YoutubeVideo directYoutubeVideo;

@@ -37,6 +37,7 @@
             part,
             duration_seconds,
             uploaded_sequence,
+            rest_seconds_after,
             user_id
         ) VALUES (
                      #{videoUrl},
@@ -45,6 +46,7 @@
                      #{part},
                      #{durationSeconds},
                      #{uploadedSequence},
+                     #{restSecondsAfter},
                      #{userId}
                  )
     </insert>

@@ -3,4 +3,103 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.holeinone.ssafit.model.dao.PostDao">
 
+    <!--루틴 아이디를 통해 루틴 영상 정보 조회-->
+    <select id="getRoutineById" parameterType="long" resultType="RoutineVideo">
+        SELECT *
+        FROM routine_video
+        WHERE routine_id = #{routineId}
+    </select>
+
+    <!--루틴 아이디를 통해 유튜브 영상 정보 조회-->
+    <select id="getYoutubeById" parameterType="long" resultType="YoutubeVideo">
+        SELECT *
+        FROM youtube_video
+        WHERE youtube_video_id = #{youtubeVideoId}
+    </select>
+
+    <!--루틴 아이디를 통해 업로드 영상 정보 조회-->
+    <select id="getUploadById" parameterType="long" resultType="UploadedVideo">
+        SELECT *
+        FROM uploaded_video
+        WHERE uploaded_video_id = #{uploadedVideoId}
+    </select>
+
+    <!--게시글 등록하고 게시글 ID 반환-->
+    <insert id="postRoutine" parameterType="Post" useGeneratedKeys="true" keyProperty="postId">
+        INSERT INTO post (title, content, user_id, routine_id)
+        VALUES (#{title}, #{content}, #{userId}, #{routineId})
+    </insert>
+
+    <update id="postRoutineShared" parameterType="long">
+        UPDATE routine
+        SET is_shared = true
+        WHERE routine_id = #{routineId}
+    </update>
+
+    <!--post 테이블 썸네일 url 추가 등록-->
+    <update id="postRoutinethumbnailUrl" parameterType="Post">
+        UPDATE post
+        SET thumbnail_url = #{thumbnailUrl}
+        WHERE post_id = #{postId}
+    </update>
+
+    <!--게시글 파일 저장-->
+    <insert id="postDaoFileInsert" parameterType="PostFile">
+        INSERT INTO post_file (
+            file_url,
+            original_filename,
+            file_type,
+            post_id
+        ) VALUES (
+                     #{fileUrl},
+                     #{originalFilename},
+                     #{fileType},
+                     #{postId}
+                 )
+    </insert>
+
+    <!--게시글 상세 정보 가져오기-->
+    <select id="getPost" resultType="Post">
+        SELECT *
+        FROM post
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--게시글 파일 정보 가져오기-->
+    <select id="getFiles" resultType="PostFile">
+        SELECT *
+        FROM post_file
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--루틴 정보 가져오기-->
+    <select id="getRoutine" resultType="Routine">
+        SELECT *
+        FROM routine
+        WHERE routine_id = #{routineId}
+    </select>
+
+    <select id="getPostUser" parameterType="long" resultType="User">
+        SELECT *
+        FROM user
+        WHERE user_id = (
+              SELECT user_id
+              FROM post
+              WHERE post_id = #{postId}
+                  )
+    </select>
+
+    <!--삭제할 게시글 파일 url 가져오기-->
+    <select id="selectFileUrlsByPostId" resultType="string" parameterType="long">
+        SELECT file_url
+        FROM post_file
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--db에서 게시글 삭제하기-->
+    <delete id="deletePost" parameterType="long">
+        DELETE FROM post
+        WHERE post_id = #{postId}
+    </delete>
+
 </mapper>
