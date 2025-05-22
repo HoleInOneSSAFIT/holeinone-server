@@ -51,12 +51,12 @@ public class UserServiceImpl implements UserService {
 
         User user = userDao.findByUsername(username);
         if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("아이디 또는 비밀번호가 잘못되었습니다.");
+            throw new IllegalStateException("아이디 또는 비밀번호가 잘못되었습니다.");
         }
 
         // isActive가 false면 탈퇴한 상태
         if(!user.getIsActive()) {
-            throw new RuntimeException("이미 탈퇴한 계정입니다.");
+            throw new IllegalStateException("이미 탈퇴한 계정입니다.");
         }
 
         // 토큰 생성
