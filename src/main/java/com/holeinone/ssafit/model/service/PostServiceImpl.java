@@ -187,4 +187,10 @@ public class PostServiceImpl implements PostService{
         return postDao.deletePost(postId);
     }
 
+    //게시글 전체 목록 저허;
+    @Override
+    public List<Post> listPosts() {
+        return postDao.listPosts();
+    }
+
 }

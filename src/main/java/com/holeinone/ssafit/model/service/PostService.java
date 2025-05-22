@@ -26,4 +26,7 @@ public interface PostService {
     
     //게시글 삭제
     int deletePost(Long postId);
+    
+    //게시글 전체 목록
+    List<Post> listPosts();
 }

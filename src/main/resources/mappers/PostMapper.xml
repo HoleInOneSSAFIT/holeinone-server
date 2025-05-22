@@ -102,4 +102,10 @@
         WHERE post_id = #{postId}
     </delete>
 
+    <!--게시글 전체 목록 조회-->
+    <select id="listPosts" resultType="Post">
+        SELECT *
+        FROM post
+    </select>
+
 </mapper>
