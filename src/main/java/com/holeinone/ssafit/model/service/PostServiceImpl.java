@@ -7,6 +7,7 @@ import com.holeinone.ssafit.model.dto.*;
 import com.holeinone.ssafit.util.S3Uploader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -167,6 +168,23 @@ public class PostServiceImpl implements PostService{
     @Override
     public User getPostUser(Long postId) {
         return postDao.getPostUser(postId);
+    }
+    
+    //게시글 삭제
+    @Transactional
+    @Override
+    public int deletePost(Long postId) {
+
+        //삭제할 게시글 파일 url 가져오기
+        List<String> fileUrls = postDao.selectFileUrlsByPostId(postId);
+        
+        //s3에서 게시글에 해당하는 파일들 삭제
+        for (String fileUrl : fileUrls) {
+            s3Uploader.delete(fileUrl);
+        }
+        
+        //db에서 게시글 삭제
+        return postDao.deletePost(postId);
     }
 
 }

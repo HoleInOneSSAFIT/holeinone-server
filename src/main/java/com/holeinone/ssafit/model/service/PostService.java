@@ -23,4 +23,7 @@ public interface PostService {
 
     //게시글 작성한 유저 정보 반환
     User getPostUser(Long postId);
+    
+    //게시글 삭제
+    int deletePost(Long postId);
 }
