@@ -35,4 +35,7 @@ public interface PostDao {
 
     //루틴 공유 상태 ture로 변경
     void postRoutineShared(Long routineId);
+
+    //게시글 작성한 유저 정보 반환
+    User getPostUser(Long postId);
 }

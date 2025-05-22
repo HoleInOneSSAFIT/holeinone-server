@@ -148,9 +148,6 @@ public class PostServiceImpl implements PostService{
     @Override
     public Post getPost(Long postId) {
 
-        Post post = postDao.getPost(postId);
-        log.info("zzz: {}", post);
-
         return postDao.getPost(postId);
     }
 
@@ -164,6 +161,12 @@ public class PostServiceImpl implements PostService{
     @Override
     public Routine getRoutine(Long routineId) {
         return postDao.getRoutine(routineId);
+    }
+
+    //게시글 작성한 유저 정보 반환
+    @Override
+    public User getPostUser(Long postId) {
+        return postDao.getPostUser(postId);
     }
 
 }

@@ -79,4 +79,14 @@
         WHERE routine_id = #{routineId}
     </select>
 
+    <select id="getPostUser" parameterType="long" resultType="User">
+        SELECT *
+        FROM user
+        WHERE user_id = (
+              SELECT user_id
+              FROM post
+              WHERE post_id = #{postId}
+                  )
+    </select>
+
 </mapper>
