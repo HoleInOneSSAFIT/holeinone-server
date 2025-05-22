@@ -2,6 +2,7 @@ package com.holeinone.ssafit.model.service;
 
 import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dao.PostDao;
+import com.holeinone.ssafit.model.dao.UserDao;
 import com.holeinone.ssafit.model.dao.VideoDao;
 import com.holeinone.ssafit.model.dto.*;
 import com.holeinone.ssafit.util.S3Uploader;
@@ -19,10 +20,12 @@ public class PostServiceImpl implements PostService{
 
     private final PostDao postDao;
     private final S3Uploader s3Uploader;
+    private final UserDao userDao;
 
-    public PostServiceImpl(PostDao postDao, S3Uploader s3Uploader) {
+    public PostServiceImpl(PostDao postDao, S3Uploader s3Uploader, UserDao userDao) {
         this.postDao = postDao;
         this.s3Uploader = s3Uploader;
+        this.userDao = userDao;
     }
 
     //루틴 아이디를 통해 루틴 영상 정보 조회
@@ -185,6 +188,12 @@ public class PostServiceImpl implements PostService{
         
         //db에서 게시글 삭제
         return postDao.deletePost(postId);
+    }
+
+    // userId로 본인이 작성한 게시글 목록 가져오기
+    @Override
+    public List<Post> getPostList(Long userId) {
+        return postDao.selectPostList(userId);
     }
 
 }

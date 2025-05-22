@@ -102,4 +102,10 @@
         WHERE post_id = #{postId}
     </delete>
 
+    <!--ID로 본인이 작성한 게시글 목록 가져오기-->
+    <select id="selectPostList" parameterType="long" resultType="post">
+        SELECT * FROM post
+        WHERE user_id = #{userId}
+    </select>
+
 </mapper>

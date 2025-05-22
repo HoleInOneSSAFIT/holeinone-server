@@ -45,4 +45,7 @@ public interface PostDao {
     //db에서 게시글 삭제하고 파일 url 얻어오기
     int deletePost(Long postId);
 
+    // userId로 본인이 작성한 게시글 목록 가져오기
+    List<Post> selectPostList(Long userId);
+
 }

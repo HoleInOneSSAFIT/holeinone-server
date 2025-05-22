@@ -21,9 +21,12 @@ public interface PostService {
     // 루틴 정보 가져오기
     Routine getRoutine(Long routineId);
 
-    //게시글 작성한 유저 정보 반환
+    // 게시글 작성한 유저 정보 반환
     User getPostUser(Long postId);
     
-    //게시글 삭제
+    // 게시글 삭제
     int deletePost(Long postId);
+
+    // userId로 본인이 작성한 게시글 목록 가져오기
+    List<Post> getPostList(Long userId);
 }
