@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin("*")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true") // crossorigin 주소 명시하고 credential 설정 true 처리
 public class AuthController {
 
     private final UserService userService;
@@ -138,7 +138,7 @@ public class AuthController {
 
         userService.update(user, token);
 
-        System.out.println("[수정 후] 프로필사진 경로: " + user.getProfileImage() + " 비밀번호: " + user.getPassword() + " 닉네임: " + user.getNickname() + " 키: " + user.getHeight() + " 몸무게: " + user.getWeight());
+//        System.out.println("[수정 후] 프로필사진 경로: " + user.getProfileImage() + " 비밀번호: " + user.getPassword() + " 닉네임: " + user.getNickname() + " 키: " + user.getHeight() + " 몸무게: " + user.getWeight());
 
         return ResponseEntity.ok("수정이 완료되었습니다.");
     }
