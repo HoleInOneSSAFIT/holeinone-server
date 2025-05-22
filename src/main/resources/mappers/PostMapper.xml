@@ -89,4 +89,17 @@
                   )
     </select>
 
+    <!--삭제할 게시글 파일 url 가져오기-->
+    <select id="selectFileUrlsByPostId" resultType="string" parameterType="long">
+        SELECT file_url
+        FROM post_file
+        WHERE post_id = #{postId}
+    </select>
+
+    <!--db에서 게시글 삭제하기-->
+    <delete id="deletePost" parameterType="long">
+        DELETE FROM post
+        WHERE post_id = #{postId}
+    </delete>
+
 </mapper>

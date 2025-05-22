@@ -38,4 +38,11 @@ public interface PostDao {
 
     //게시글 작성한 유저 정보 반환
     User getPostUser(Long postId);
+
+    //삭제할 게시글 파일 url 가져오기
+    List<String> selectFileUrlsByPostId(Long postId);
+
+    //db에서 게시글 삭제하고 파일 url 얻어오기
+    int deletePost(Long postId);
+
 }

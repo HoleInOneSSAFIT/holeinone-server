@@ -79,6 +79,17 @@ public class PostController {
 
         return ResponseEntity.ok(postUserList);
     }
+    
+    //게시글 삭제
+    @DeleteMapping("/{postId}")
+    public ResponseEntity<?> deletePost(@PathVariable Long postId) {
+        
+        //게시글 삭제
+        int result = postService.deletePost(postId);
+       
+        //반환값 생각해봐야함
+        return ResponseEntity.ok("게시글 삭제 성공");
+    }
 
 
 
