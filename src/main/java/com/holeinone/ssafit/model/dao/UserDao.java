@@ -8,6 +8,7 @@ import java.util.List;
 public interface UserDao {
     void save(User user);
     User findByUsername(@Param("username") String username);
+    User findByNickname(@Param("nickname") String nickname);
     void updateRefreshToken(@Param("username") String username, @Param("refreshToken") String refreshToken);
     void deleteRefreshToken(String refreshToken);
     User findByRefreshToken(String refreshToken);
