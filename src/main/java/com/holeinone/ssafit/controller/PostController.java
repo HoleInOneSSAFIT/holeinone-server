@@ -68,5 +68,18 @@ public class PostController {
 //        return ResponseEntity.ok(postService.getCommentsByPost(postId));
 //    }
 
+    //게시글 작성한 유저 정보
+    @GetMapping("/user/{postId}")
+    public ResponseEntity<User> getPostUser(@PathVariable Long postId) {
+        
+        //게시글 작성한 유저 정보 반환
+        User postUserList = postService.getPostUser(postId);
+
+        //유저의 프로필 이미지 정보도 가져오기!!!!!!!!!!!!!!!!
+
+        return ResponseEntity.ok(postUserList);
+    }
+
+
 
 }
