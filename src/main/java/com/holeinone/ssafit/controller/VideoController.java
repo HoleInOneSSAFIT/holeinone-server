@@ -165,11 +165,54 @@ public class VideoController {
         return "";
     }
 
-    //운동 루틴 하나 정보 뿌리기
+    //운동 루틴 하나씩 조회
+    @GetMapping("/routineSelect/{sequence}")
+    public ResponseEntity<?> routineSelect(@PathVariable int sequence, HttpSession session) {
+
+        // 세션에서 루틴 데이터 꺼내기
+        VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        //세션에 루틴 데이터 자체가 없는 경우
+        if (routineData == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "루틴 정보가 없습니다.");
+        }
+
+        //유튜브 영상, 업로드 영상
+        List<YoutubeVideo> youtubeVideoList = routineData.getYoutubeVideoList();
+        List<UploadedVideo> uploadedVideoList = routineData.getUploadVideoList();
+
+        // 루틴은 있지만 안에 아무 영상도 담겨있지 않는 경우
+        if ((youtubeVideoList == null || youtubeVideoList.isEmpty()) &&
+                (uploadedVideoList == null || uploadedVideoList.isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "조회할 영상이 없습니다.");
+        }
+
+        //조회할 영상이 유튜브 영상중에 있다면 해당 영상 정보 리턴
+        if(youtubeVideoList != null) {
+            for (YoutubeVideo video : youtubeVideoList) {
+                if (video.getYoutubeSequence() == sequence) {
+                    return ResponseEntity.ok(video);
+                }
+            }
+        }
+        //조회할 영상이 업로드 영상중에 있다면 해당 영상 정보 리턴
+        if(uploadedVideoList != null) {
+            for (UploadedVideo video : uploadedVideoList) {
+                if(video.getUploadedSequence() == sequence) {
+                    return ResponseEntity.ok(video);
+                }
+            }
+        }
+
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "해당 순서의 영상이 없습니다.");
+    }
+
+    //운동 루틴 하나 수정
+
 
     //운동 루틴 중 하나 삭제
-    @GetMapping("/routineUpdate/{sequence}")
-    public ResponseEntity<?>  routineUpdate(@PathVariable int sequence, HttpSession session) {
+    @GetMapping("/routineDelete/{sequence}")
+    public ResponseEntity<?>  routineDelete(@PathVariable int sequence, HttpSession session) {
 
         // 세션에서 루틴 데이터 꺼내기
         VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
@@ -218,7 +261,6 @@ public class VideoController {
     }
 
 
-    //운동 루틴 중 하나 삭제
     //세션에 담긴 루틴 전부 초기화
 
 
