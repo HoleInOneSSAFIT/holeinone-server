@@ -165,6 +165,107 @@ public class VideoController {
         return "";
     }
 
+    //운동 루틴 하나씩 조회
+    @GetMapping("/routineSelect/{sequence}")
+    public ResponseEntity<?> routineSelect(@PathVariable int sequence, HttpSession session) {
+
+        // 세션에서 루틴 데이터 꺼내기
+        VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        //세션에 루틴 데이터 자체가 없는 경우
+        if (routineData == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "루틴 정보가 없습니다.");
+        }
+
+        //유튜브 영상, 업로드 영상
+        List<YoutubeVideo> youtubeVideoList = routineData.getYoutubeVideoList();
+        List<UploadedVideo> uploadedVideoList = routineData.getUploadVideoList();
+
+        // 루틴은 있지만 안에 아무 영상도 담겨있지 않는 경우
+        if ((youtubeVideoList == null || youtubeVideoList.isEmpty()) &&
+                (uploadedVideoList == null || uploadedVideoList.isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "조회할 영상이 없습니다.");
+        }
+
+        //조회할 영상이 유튜브 영상중에 있다면 해당 영상 정보 리턴
+        if(youtubeVideoList != null) {
+            for (YoutubeVideo video : youtubeVideoList) {
+                if (video.getYoutubeSequence() == sequence) {
+                    return ResponseEntity.ok(video);
+                }
+            }
+        }
+        //조회할 영상이 업로드 영상중에 있다면 해당 영상 정보 리턴
+        if(uploadedVideoList != null) {
+            for (UploadedVideo video : uploadedVideoList) {
+                if(video.getUploadedSequence() == sequence) {
+                    return ResponseEntity.ok(video);
+                }
+            }
+        }
+
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "해당 순서의 영상이 없습니다.");
+    }
+
+    //운동 루틴 하나 수정
+
+
+    //운동 루틴 중 하나 삭제
+    //근데 만약 직접 업로드인 경우는 s3에서 삭제도 해줘야 할것 같은데!!!!
+    @GetMapping("/routineDelete/{sequence}")
+    public ResponseEntity<?>  routineDelete(@PathVariable int sequence, HttpSession session) {
+
+        // 세션에서 루틴 데이터 꺼내기
+        VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        //세션에 루틴 데이터 자체가 없는 경우
+        if (routineData == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "루틴 정보가 없습니다.");
+        }
+
+        //유튜브 영상, 업로드 영상
+        List<YoutubeVideo> youtubeVideoList = routineData.getYoutubeVideoList();
+        List<UploadedVideo> uploadedVideoList = routineData.getUploadVideoList();
+
+        // 루틴은 있지만 안에 아무 영상도 담겨있지 않는 경우
+        if ((youtubeVideoList == null || youtubeVideoList.isEmpty()) &&
+                (uploadedVideoList == null || uploadedVideoList.isEmpty())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "삭제할 영상이 없습니다.");
+        }
+
+        // 유튜브 영상 삭제 및 순서 정렬
+        if (youtubeVideoList != null) {
+            // 삭제할 순서의 루틴 영상인 경우 삭제
+            youtubeVideoList.removeIf(video -> video.getYoutubeSequence() == sequence);
+            // 삭제 순서 이후의 영상들은 순서 -1 조정
+            for (YoutubeVideo video : youtubeVideoList) {
+                if (video.getYoutubeSequence() > sequence) {
+                    video.setYoutubeSequence(video.getYoutubeSequence() - 1);
+                }
+            }
+        }
+
+        // 업로드 영상 삭제 및 순서 정렬
+        if (uploadedVideoList != null) {
+            uploadedVideoList.removeIf(video -> video.getUploadedSequence() == sequence);
+            for (UploadedVideo video : uploadedVideoList) {
+                if (video.getUploadedSequence() > sequence) {
+                    video.setUploadedSequence(video.getUploadedSequence() - 1);
+                }
+            }
+        }
+
+        // 세션에 반영
+        session.setAttribute("videoRoutineResult", routineData);
+
+        return ResponseEntity.ok(routineData);
+    }
+
+
+    //세션에 담긴 루틴 전부 초기화
+
+
+
     /**
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
      **/
@@ -199,8 +300,25 @@ public class VideoController {
                 routineTitle, routineContent
         );
 
+        //루틴 영상 세션 초기화
+        session.removeAttribute("videoRoutineResult");
+
         //영상 루틴 출력해줘야함
         return "";
+    }
+
+    //루틴 삭제
+    @DeleteMapping("/routineIdDelete/{routineId}")
+    public ResponseEntity<?>  routineIdDelete(@PathVariable long routineId) {
+
+        try {
+            //루틴 아이디를 통해 루틴 삭제
+            int result = videoService.routineIdDelete(routineId);
+            return ResponseEntity.ok("삭제 성공: " + result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("루틴 삭제 실패: " + e.getMessage());
+        }
+
     }
 
 
