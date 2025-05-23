@@ -265,7 +265,29 @@ public class VideoController {
     //세션에 담긴 루틴 전부 초기화
     @GetMapping("/tempRoutineReset")
     public ResponseEntity<?>  tempRoutineReset(HttpSession session) {
-        return ResponseEntity.ok("");
+
+        // 운동 루틴 영상들 임시 저장소 (null일 경우 새 객체 생성)
+        VideoRoutineSessionData videoRoutineResultList = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        log.info("루틴 영상 리스트 : {}, 사이즈 : {} ",
+                videoRoutineResultList,
+                (videoRoutineResultList.getYoutubeVideoList().size() +
+                        (videoRoutineResultList.getUploadVideoList() == null ? 0 : videoRoutineResultList.getUploadVideoList().size())));
+
+        session.removeAttribute("videoRoutineResult");
+
+        log.info("루틴 영상 리스트 : {}, 사이즈 : {} ",
+                videoRoutineResultList,
+                (videoRoutineResultList.getYoutubeVideoList().size() +
+                        (videoRoutineResultList.getUploadVideoList() == null ? 0 : videoRoutineResultList.getUploadVideoList().size())));
+
+        // 삭제 후: 세션에서 다시 꺼냄
+        VideoRoutineSessionData afterReset = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        log.info("삭제 후 세션 videoRoutineResult 값: {}", afterReset);
+
+        return ResponseEntity.ok("임시 루틴이 초기화되었습니다.");
+
     }
 
 
