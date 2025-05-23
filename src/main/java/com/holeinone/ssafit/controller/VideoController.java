@@ -263,7 +263,10 @@ public class VideoController {
 
 
     //세션에 담긴 루틴 전부 초기화
-
+    @GetMapping("/tempRoutineReset")
+    public ResponseEntity<?>  tempRoutineReset(HttpSession session) {
+        return ResponseEntity.ok("");
+    }
 
 
     /**
