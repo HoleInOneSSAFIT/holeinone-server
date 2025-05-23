@@ -75,9 +75,6 @@ public class UserServiceImpl implements UserService {
         tokens.put("accessToken", accessToken);
         tokens.put("refreshToken", refreshToken);
 
-//        System.out.println("access_token = " + tokens.get("accessToken"));
-//        System.out.println("refresh_token = " + tokens.get("refreshToken"));
-
         return tokens;
     }
 
@@ -115,10 +112,6 @@ public class UserServiceImpl implements UserService {
 
         // user에 username 강제로 설정함(프론트에서 username 넘겨주지 않아도 됨)
         user.setUsername(username);
-
-//        if(!username.equals(user.getUsername())) {
-//            throw new AccessDeniedException("본인만 수정할 수 있습니다.");
-//        }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         userDao.update(user);
