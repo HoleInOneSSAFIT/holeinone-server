@@ -99,4 +99,49 @@
         WHERE youtube_video_id = #{youtubeVideoId}
     </select>
 
+    <!--루틴 삭제를 위한 s3 루틴 파일 url 조회-->
+    <select id="routineFileUrl" parameterType="long">
+        SELECT
+            uv.video_url
+        FROM routine_video rv
+                 LEFT JOIN uploaded_video uv ON rv.uploaded_video_id = uv.uploaded_video_id
+        WHERE rv.routine_id = #{routineId}
+          AND uv.video_url IS NOT NULL
+    </select>
+
+    <!--게시글 url 파일 가져오기(루틴 아이디를 공유한 게시글 아이디를 통해서)-->
+    <select id="postFileUrl" parameterType="long">
+        SELECT pf.file_url
+        FROM post p
+                 JOIN post_file pf ON p.post_id = pf.post_id
+        WHERE p.routine_id = #{routineId}
+    </select>
+
+    <!--루틴 삭제-->
+    <delete id="routineIdDelete" parameterType="long">
+        delete
+        from routine
+        where routine_id = #{routineId}
+    </delete>
+
+    <!--루틴-영상 매핑 테이블에서 유튜브 영상ID, 업로드 영상 ID를 가져오기-->
+    <select id="routineVideoIds" parameterType="long" resultType="RoutineVideoId">
+        SELECT youtube_video_id, uploaded_video_id
+        FROM routine_video
+        WHERE routine_id = #{routineId}
+          AND (youtube_video_id IS NOT NULL OR uploaded_video_id IS NOT NULL)
+    </select>
+
+    <!--루틴 삭제 -> 유튜브 영상 db 삭제-->
+    <delete id="deleteYoutubeById" parameterType="long">
+        DELETE FROM youtube_video
+               WHERE youtube_video_id = #{youtubeVideoId}
+    </delete>
+
+    <!--루틴 삭제- > 업로드 영상 db 삭제-->
+    <delete id="deleteUploadedById" parameterType="long">
+        DELETE FROM uploaded_video
+        WHERE uploaded_video_id = #{uploadedVideoId}
+    </delete>
+
 </mapper>

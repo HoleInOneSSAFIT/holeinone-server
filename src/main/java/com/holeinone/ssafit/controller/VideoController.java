@@ -211,6 +211,7 @@ public class VideoController {
 
 
     //운동 루틴 중 하나 삭제
+    //근데 만약 직접 업로드인 경우는 s3에서 삭제도 해줘야 할것 같은데!!!!
     @GetMapping("/routineDelete/{sequence}")
     public ResponseEntity<?>  routineDelete(@PathVariable int sequence, HttpSession session) {
 
@@ -304,6 +305,20 @@ public class VideoController {
 
         //영상 루틴 출력해줘야함
         return "";
+    }
+
+    //루틴 삭제
+    @DeleteMapping("/routineIdDelete/{routineId}")
+    public ResponseEntity<?>  routineIdDelete(@PathVariable long routineId) {
+
+        try {
+            //루틴 아이디를 통해 루틴 삭제
+            int result = videoService.routineIdDelete(routineId);
+            return ResponseEntity.ok("삭제 성공: " + result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("루틴 삭제 실패: " + e.getMessage());
+        }
+
     }
 
 
