@@ -12,8 +12,6 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.Response;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true") // crossorigin 주소 명시하고 credential 설정 true 처리
 public class AuthController {
 
     private final UserService userService;
@@ -39,7 +36,6 @@ public class AuthController {
         }
 
         userService.register(user);
-
         return ResponseEntity.ok("회원가입 성공");
     }
 
@@ -58,13 +54,21 @@ public class AuthController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> loginRequest) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody Map<String, String> loginRequest, HttpServletResponse response) {
         String username = loginRequest.get("username");
         String password = loginRequest.get("password");
 
         Map<String, String> tokens = userService.login(username, password);
 
-        return ResponseEntity.ok(tokens);
+        // refreshToken은 HttpOnly 쿠키, accessToken은 JSON
+        ResponseCookie cookie = ResponseCookie.from("refreshToken",
+                        tokens.get("refreshToken"))
+                .httpOnly(true).secure(false)
+                .sameSite("Lax").path("/")
+                .maxAge(7 * 24 * 60 * 60).build();
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok(Map.of("accessToken", tokens.get("accessToken")));
     }
 
     // 로그아웃
@@ -92,7 +96,7 @@ public class AuthController {
                 .path("/")
                 .maxAge(0)  // 즉시 만료
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .sameSite("Lax")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
@@ -113,7 +117,7 @@ public class AuthController {
 
         // 새로운 리프레시 토큰 받아와서 쿠키 교체하기
         ResponseCookie cookie = ResponseCookie.from("refreshToken", tokens.get("refreshToken"))
-                .httpOnly(true).secure(true).sameSite("Lax")
+                .httpOnly(true).secure(false).sameSite("Lax")
                 .path("/").maxAge(7 * 24 * 60 * 60).build(); // 새로운 리프레시 쿠키 세팅하기
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
 
@@ -157,13 +161,16 @@ public class AuthController {
     @PutMapping("/update")
     public ResponseEntity<String> update(@RequestBody User user, @RequestHeader("Authorization") String token)
             throws AccessDeniedException {
+
+        if (user.getPassword() == null || user.getPassword().isBlank()) {
+            return ResponseEntity.badRequest().body("비밀번호는 필수입니다.");  // 400
+        }
+
         if(token != null && token.startsWith("Bearer ")) {
             token = token.substring(7);
         }
 
         userService.update(user, token);
-
-//        System.out.println("[수정 후] 프로필사진 경로: " + user.getProfileImage() + " 비밀번호: " + user.getPassword() + " 닉네임: " + user.getNickname() + " 키: " + user.getHeight() + " 몸무게: " + user.getWeight());
 
         return ResponseEntity.ok("수정이 완료되었습니다.");
     }
