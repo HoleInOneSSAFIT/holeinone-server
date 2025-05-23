@@ -309,17 +309,16 @@ public class VideoController {
 
     //루틴 삭제
     @DeleteMapping("/routineIdDelete/{routineId}")
-    public ResponseEntity<?>  routineIdDelete(@PathVariable int routineId, HttpSession session) {
+    public ResponseEntity<?>  routineIdDelete(@PathVariable long routineId) {
 
-        //루틴 삭제-> 운동-루틴 삭제-> 게시글 삭제-> 게시글 파일 삭제-> 댓글 삭제
-        //유튜브 영상, 업로드 영상은 따로 삭제
-        //s3에 저장된 게시글 파일, 유튜브 영상, 업로드 영상 따로 삭제
+        try {
+            //루틴 아이디를 통해 루틴 삭제
+            int result = videoService.routineIdDelete(routineId);
+            return ResponseEntity.ok("삭제 성공: " + result);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("루틴 삭제 실패: " + e.getMessage());
+        }
 
-        //루틴 아이디를 통해 루틴 삭제
-        int result = videoService.routineIdDelete(routineId);
-
-
-        return ResponseEntity.ok("");
     }
 
 

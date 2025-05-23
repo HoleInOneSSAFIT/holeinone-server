@@ -337,14 +337,14 @@ public class VideoServiceImpl implements VideoService {
             youtubeVideo.setUserId((long) 1); //임시 데이터
 
             //유튜브 ID 값 반환 받기
-            int youtubeVideoResultId = videoDao.insertVideoRoutine(youtubeVideo);
-            log.info("유튜브 ID : {} ", youtubeVideo.getYoutubeVideoId());
-
-            //저장한 유튜브 객체 반환(아이디를 통해 조회)
-            YoutubeVideo savedVideo = videoDao.selectYoutubeVideoById(Math.toIntExact(youtubeVideo.getYoutubeVideoId()));
+//            int youtubeVideoResultId = videoDao.insertVideoRoutine(youtubeVideo);
+//            log.info("유튜브 ID : {} ", youtubeVideo.getYoutubeVideoId());
+//
+//            //저장한 유튜브 객체 반환(아이디를 통해 조회)
+//            YoutubeVideo savedVideo = videoDao.selectYoutubeVideoById(Math.toIntExact(youtubeVideo.getYoutubeVideoId()));
 
             //저장한 영상 리턴
-            return savedVideo;
+            return youtubeVideo;
 
         } catch (CustomException e) {
             // CustomException은 그대로 던짐
@@ -356,20 +356,52 @@ public class VideoServiceImpl implements VideoService {
     }
 
     //루틴 아이디를 통해 루틴 삭제
+    @Transactional
     @Override
-    public int routineIdDelete(int routineId) {
+    public int routineIdDelete(long routineId) {
+        try {
+            // 1. S3 파일 URL 수집 및 삭제
+            List<String> routineFileUrls = videoDao.routineFileUrl(routineId);
+            List<String> postFileUrls = videoDao.postFileUrl(routineId);
 
-        //1. s3에서 파일 삭제를 위해 게시글 파일, 유튜브 영상, 업로드 영상의 url을 받아와야한다
-        List<String> routineFileUrls = videoDao.routineFileUrl(routineId); //루틴 영상
+            List<String> allFileUrls = new ArrayList<>();
+            allFileUrls.addAll(routineFileUrls);
+            allFileUrls.addAll(postFileUrls);
 
-        List<String> routinePostFileUrls = videoDao.routinePostFileUrl(routineId); //게시글 파일
+            for (String fileUrl : allFileUrls) {
+                s3Uploader.delete(fileUrl);
+            }
 
-        //2. 루틴 삭제-> 운동-루틴 삭제-> 게시글 삭제-> 게시글 파일 삭제-> 댓글 삭제
+            // 2. 루틴 관련 데이터 삭제 순서
+            // (루틴-영상 매핑 테이블에서 영상 ID 먼저 가져오기)
+            List<RoutineVideoId> videoIds = videoDao.routineVideoIds(routineId);
 
-        //3.유튜브 영상, 업로드 영상은 삭제
+            for(RoutineVideoId videoId : videoIds) {
+                log.info("비디오 아이디 : {} ", videoId);
+            }
 
+            // 루틴-영상 매핑 테이블, 루틴, 게시글, 게시글 파일 등 한꺼번에 삭제
+            int deletedResult = videoDao.routineIdDelete(routineId);
 
-        return 0;
+            if (deletedResult == 0) {
+                throw new RuntimeException("루틴 삭제 실패: 존재하지 않는 ID");
+            }
+
+            // 3. 영상 테이블 삭제
+            for (RoutineVideoId idPair : videoIds) {
+                if (idPair.getYoutubeVideoId() != null) {
+                    videoDao.deleteYoutubeById(idPair.getYoutubeVideoId());
+                }
+                if (idPair.getUploadedVideoId() != null) {
+                    videoDao.deleteUploadedById(idPair.getUploadedVideoId());
+                }
+            }
+
+            return deletedResult;
+        } catch (Exception e) {
+            log.error("루틴 삭제 중 오류 발생", e);
+            throw new RuntimeException("루틴 삭제 실패", e);
+        }
     }
 
     //유튜브 url 아이디 추출

@@ -1,5 +1,6 @@
 package com.holeinone.ssafit.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -8,8 +9,13 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class S3Uploader {
 
@@ -58,11 +64,23 @@ public class S3Uploader {
 
     //파일 경로+파일명 추출
     private String extractKeyFromUrl(String fileUrl) {
-        
-        //해당하지 않는 부분들 저장 후 그 부분만 전체 url 중에서 공백 처리
-        String baseUrl = "https://" + bucket + ".s3.amazonaws.com/";
-        return fileUrl.replace(baseUrl, "");
-    
+        try {
+            URL url = new URL(fileUrl);
+            String path = url.getPath(); // /uploaded-videos/..._%EC%98%81%EC%83%81...
+
+            if (path.startsWith("/")) {
+                path = path.substring(1); // uploaded-videos/...
+            }
+
+            String st = URLDecoder.decode(path, StandardCharsets.UTF_8);
+
+            log.info("파일 key값 : {}", st);
+
+            // URL 디코딩 (한글, 공백 등 복원)
+            return st;
+        } catch (Exception e) {
+            throw new IllegalArgumentException("잘못된 S3 URL입니다: " + fileUrl, e);
+        }
     }
 
 
