@@ -262,10 +262,33 @@ public class VideoController {
     }
 
 
-    //세션에 담긴 루틴 전부 초기화
+    //세션에 담긴 임시 루틴 전부 초기화
     @GetMapping("/tempRoutineReset")
     public ResponseEntity<?>  tempRoutineReset(HttpSession session) {
-        return ResponseEntity.ok("");
+
+        //세션에 담긴 임시 루틴 영상 가져오기
+        VideoRoutineSessionData videoRoutineResultList = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+
+        //VideoRoutineSessionData 객체 내부 초기화
+        if (videoRoutineResultList != null) {
+            if (videoRoutineResultList.getYoutubeVideoList() != null) {
+                log.info("초기화 전 - 유튜브 리스트 사이즈: {}", videoRoutineResultList.getYoutubeVideoList().size());
+                videoRoutineResultList.getYoutubeVideoList().clear();
+            }
+            if (videoRoutineResultList.getUploadVideoList() != null) {
+                log.info("초기화 전 - 업로드 리스트 사이즈: {}", videoRoutineResultList.getUploadVideoList().size());
+                videoRoutineResultList.getUploadVideoList().clear();
+            }
+        }
+
+        // 세션에서도 제거
+        session.removeAttribute("videoRoutineResult");
+
+        log.info("videoRoutineResultList 객체 내부 확인 : {}", videoRoutineResultList);
+        log.info("세션 내부 확인 : {}", session.getAttribute("videoRoutineResult"));
+
+        return ResponseEntity.ok("임시 루틴과 내부 리스트가 초기화되었습니다.");
+
     }
 
 
