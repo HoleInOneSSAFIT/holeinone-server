@@ -1,4 +1,8 @@
 package com.holeinone.ssafit.model.dao;
 
-public class CommentDao {
+import com.holeinone.ssafit.model.dto.CommentResponse;
+import java.util.List;
+
+public interface CommentDao {
+    List<CommentResponse> selectAllComments(Long postId);
 }

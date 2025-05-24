@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.holeinone.ssafit.model.dao.CommentDao">
+
+    <select id="selectAllComments" parameterType="Long" resultType="CommentResponse">
+        SELECT
+            c.comment_id AS commentId,
+            c.created_at AS createAt,
+            c.content,
+            u.user_id AS userId,
+            u.profile_image AS profileImage,
+            u.username AS username,
+            u.nickname AS nickname
+        FROM comment c
+        JOIN user u ON c.user_id = u.user_id
+        WHERE c.post_id = #{userId}
+    </select>
+</mapper>
