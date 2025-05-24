@@ -13,13 +13,10 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/admin")
-@CrossOrigin("*")
 public class AdminController {
 
     private final UserService userService;
     private final JwtUtil jwtUtil;
-
-    // 모든 게시글 조회
 
     // 모든 회원 조회
     @GetMapping("/users")
