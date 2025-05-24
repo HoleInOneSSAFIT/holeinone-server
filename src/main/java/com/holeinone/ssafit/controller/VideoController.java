@@ -23,7 +23,7 @@ import java.util.Random;
 @RequiredArgsConstructor
 @Slf4j
 @RestController
-@RequestMapping("/video")
+@RequestMapping("/api/video")
 public class VideoController {
 
     private final VideoService videoService;
