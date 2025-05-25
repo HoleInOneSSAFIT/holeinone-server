@@ -1,9 +1,9 @@
 package com.holeinone.ssafit.controller;
 
-import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dto.UploadedVideo;
 import com.holeinone.ssafit.model.dto.VideoRoutineSessionData;
 import com.holeinone.ssafit.model.dto.YoutubeVideo;
+import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.VideoService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -14,10 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 //final 또는 @NonNull이 붙은 필드를 모두 파라미터로 받는 생성자 자동 생성
 @RequiredArgsConstructor
@@ -27,6 +24,7 @@ import java.util.Random;
 public class VideoController {
 
     private final VideoService videoService;
+    private final PostService postService;
 
 
     /**
@@ -36,74 +34,85 @@ public class VideoController {
      * @return 영상 제목 + 링크 목록
      */
     @GetMapping("/search")
-    public YoutubeVideo searchYoutubeVideos(@RequestParam String part,
-                                            @RequestParam(required = false, defaultValue = "") String duration,
-                                            @RequestParam(required = false, defaultValue = "") String recommend,
-                                            HttpSession session) {
+    public ResponseEntity<?> searchYoutubeVideos(@RequestParam String part,
+                                                 @RequestParam(required = false, defaultValue = "") String duration,
+                                                 @RequestParam(required = false, defaultValue = "") String recommend,
+                                                 HttpSession session) {
+        try {
+            String searchQuery = "운동";
 
-        String searchQuery = "운동";
+            // part가 "전체"이면 운동만 서치
+            if ("전체".equalsIgnoreCase(part)) {
+                part = searchQuery;
+            } else { //정해진 부위가 있다면 부위 + "운동"
+                part = part + searchQuery;
+            }
 
-        // part가 "all"이면 운동만 서치
-        if ("전체".equalsIgnoreCase(part)) {
-            part = searchQuery;
-        } else { //정해진 부위가 있다면 부위 + "운동"
-            part = part + searchQuery;
+            // duration도 "전체"이면 빈 문자열 처리
+            if ("전체".equalsIgnoreCase(duration)) {
+                duration = "";
+            }
+
+            //랜덤 영상 리스트(만약 사용자가 내가 뽑아낸 영상을 다 넘겼다면? 어떻게 해야할지 생각이 필요하다)
+            //todo: 재추천 로직이 필요한것으로 생각됩니다(기존 리스트랑 겹치지 않게)
+            List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend);
+
+            if (videos.isEmpty()) { //만약 영상이 없다면 오류 상태 던지기
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 조건에 맞는 영상이 없습니다.");
+            }
+
+            // VideoRoutineSessionData 객체 생성 및 세팅
+            VideoRoutineSessionData videoRoutineData = new VideoRoutineSessionData();
+            videoRoutineData.setYoutubeVideoList(videos);
+
+            session.setAttribute("videoRoutineData", videoRoutineData); //세션에 영상 리스트 저장하기
+
+            VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
+
+            log.info("랜덤 영상 리스트 : {}, 사이즈 : {} ", result.getYoutubeVideoList(), result.getYoutubeVideoList().size());
+
+            //여러개의 영상을 랜덤으로 하나 픽하기
+            int randomIdx = new Random().nextInt(videos.size());
+            YoutubeVideo video = videos.get(randomIdx);
+
+            //뽑은 영상 리스트 중에 하나 뽑아서 프론트로 던지기
+            return ResponseEntity.ok(video);
+
+        } catch (Exception e) {
+            log.error("유튜브 영상 검색 중 예외 발생", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("유튜브 영상 검색 중 서버 오류가 발생했습니다.");
         }
-
-        // duration도 "all"이면 빈 문자열 처리
-        if ("전체".equalsIgnoreCase(duration)) {
-            duration = "";
-        }
-
-        //랜덤 영상 리스트(만약 사용자가 내가 뽑아낸 영상을 다 넘겼다면? 어떻게 해야할지 생각이 필요하다)
-        //재추천 로직이 필요한것으로 생각됩니다(기존 리스트랑 겹치지 않게)
-        List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend);
-
-        if (videos.isEmpty()) { //만약 영상이 없다면 오류 상태 던지기
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "영상 없음");
-        }
-
-        // VideoRoutineSessionData 객체 생성 및 세팅
-        VideoRoutineSessionData videoRoutineData = new VideoRoutineSessionData();
-        videoRoutineData.setYoutubeVideoList(videos);
-
-
-        session.setAttribute("videoRoutineData", videoRoutineData); //세션에 영상 리스트 저장하기
-
-        VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
-
-        log.info("랜덤 영상 리스트 : {}, 사이즈 : {} ", result.getYoutubeVideoList(), result.getYoutubeVideoList().size());
-
-        //여러개의 영상을 랜덤으로 하나 픽하기
-        int randomIdx = new Random().nextInt(videos.size());
-        YoutubeVideo video = videos.get(randomIdx);
-
-
-        //뽑은 영상 리스트 중에 하나 뽑아서 프론트로 던지기
-        return video;
-
     }
 
     /**
      * @videoId 스킵하고자 하는 영상의 아이디
      **/
     @GetMapping("/reSearch")
-    public YoutubeVideo reSearchYoutubeVideos(@RequestParam long youtubeVideoId, HttpSession session) {
+    public ResponseEntity<?> reSearchYoutubeVideos(@RequestParam long youtubeVideoId, HttpSession session) {
+
+        log.info("다음 영상 추천 받기");
 
         //세션에 담은 랜덤 유튜브 영상 list 꺼내오기
         VideoRoutineSessionData videoList = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
 
         if (videoList == null || videoList.getYoutubeVideoList().isEmpty()) { //저장된 영상 리스트가 없을 때
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "저장된 영상 리스트가 없습니다");
+            log.warn("세션에 저장된 유튜브 영상 리스트가 없습니다.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("세션에 저장된 영상 리스트가 없습니다. 다시 검색해 주세요.");
         }
 
         // videoId에 해당하는 영상 제거
         videoList.getYoutubeVideoList().removeIf(video -> video.getYoutubeVideoId() == youtubeVideoId);
 
+        log.info("남은 영상 리스트 : {}", videoList.getYoutubeVideoList().size());
+
         if (videoList.getYoutubeVideoList().isEmpty()) {
             //추천할 영상이 더이상 없을 때
-            //프론트에서 다시 /search 요청 보내도록 해야함 🖥️
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "추천할 영상이 더 이상 없습니다");
+            //todo: 프론트에서 다시 /search 요청 보내도록 해야함 🖥️
+            log.warn("모든 추천 영상을 소진했습니다. videoId: {}", youtubeVideoId);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("추천할 영상이 더 이상 없습니다. 조건을 바꿔 다시 검색해 주세요.");
         }
 
         // 남은 리스트 중 랜덤 추천
@@ -114,16 +123,17 @@ public class VideoController {
         session.setAttribute("videoRoutineData", videoList);
 
         //다음 랜덤 유튜브 영상 추천하기
-        return nextVideo;
-
+        return ResponseEntity.ok(nextVideo);
     }
 
     //랜덤으로 담은 유튜브 영상 중 하나를 선택하고자 할 때
     @GetMapping("/youtubeSelect")
-    public String youtubeSelect(@RequestParam long youtubeVideoId,
-                                @RequestParam int sequence,
-                                @RequestParam int restSecondsAfter,
-                                HttpSession session) {
+    public ResponseEntity<?> youtubeSelect(@RequestParam long youtubeVideoId,
+                                           @RequestParam int sequence,
+                                           @RequestParam int restSecondsAfter,
+                                           HttpSession session) {
+
+        log.info("유튜브 영상 선택");
 
         // 유튜브 랜덤 영상 저장소
         VideoRoutineSessionData videoRoutineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineData");
@@ -139,6 +149,8 @@ public class VideoController {
             videoRoutineResult.setYoutubeVideoList(new ArrayList<>());
         }
 
+        YoutubeVideo selectedVideo = null;
+
         // 내가 선택한 영상이 videoRoutineData 리스트 안에 있다면 루틴에 추가
         if (videoRoutineData != null && videoRoutineData.getYoutubeVideoList() != null) {
             for (YoutubeVideo video : videoRoutineData.getYoutubeVideoList()) {
@@ -146,6 +158,7 @@ public class VideoController {
                     video.setYoutubeSequence(sequence); // 루틴 순서 지정
                     video.setRestSecondsAfter(restSecondsAfter); //운동 후 쉬는 시간 지정
                     videoRoutineResult.getYoutubeVideoList().add(video); // 루틴 리스트에 추가
+                    selectedVideo = video;
                     break;
                 }
             }
@@ -155,14 +168,16 @@ public class VideoController {
         session.setAttribute("videoRoutineResult", videoRoutineResult);
         session.removeAttribute("videoRoutineData"); // 랜덤 영상 저장소 초기화
 
-        VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
+        if (selectedVideo == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 유튜브 영상을 찾을 수 없습니다.");
+        }
 
         log.info("루틴 영상 리스트 : {}, 사이즈 : {} ",
-                result,
-                (result.getYoutubeVideoList().size() +
-                        (result.getUploadVideoList() == null ? 0 : result.getUploadVideoList().size())));
+                videoRoutineResult,
+                (videoRoutineResult.getYoutubeVideoList().size() +
+                        (videoRoutineResult.getUploadVideoList() == null ? 0 : videoRoutineResult.getUploadVideoList().size())));
 
-        return "";
+        return ResponseEntity.ok(selectedVideo); // 선택된 영상 반환
     }
 
     //운동 루틴 하나씩 조회
@@ -211,7 +226,6 @@ public class VideoController {
 
 
     //운동 루틴 중 하나 삭제
-    //근데 만약 직접 업로드인 경우는 s3에서 삭제도 해줘야 할것 같은데!!!!
     @GetMapping("/routineDelete/{sequence}")
     public ResponseEntity<?>  routineDelete(@PathVariable int sequence, HttpSession session) {
 
@@ -247,7 +261,22 @@ public class VideoController {
 
         // 업로드 영상 삭제 및 순서 정렬
         if (uploadedVideoList != null) {
-            uploadedVideoList.removeIf(video -> video.getUploadedSequence() == sequence);
+            // 먼저 삭제할 video 찾기
+            UploadedVideo target = null;
+            for (UploadedVideo video : uploadedVideoList) {
+                if (video.getUploadedSequence() == sequence) {
+                    target = video;
+                    break;
+                }
+            }
+
+            // s3에서 삭제
+            if (target != null) {
+                boolean result = videoService.tempUploadRoutineDelete(target.getVideoUrl());
+                uploadedVideoList.remove(target);
+            }
+
+            // 나머지 영상들 순서 정렬
             for (UploadedVideo video : uploadedVideoList) {
                 if (video.getUploadedSequence() > sequence) {
                     video.setUploadedSequence(video.getUploadedSequence() - 1);
@@ -297,7 +326,7 @@ public class VideoController {
      **/
     //루틴에 영상들 저장하기
     @PostMapping("/insertVideoRoutine")
-    public String insertVideo(HttpSession session, @RequestParam String routineTitle, @RequestParam String routineContent) {
+    public ResponseEntity<?> insertVideo(HttpSession session, @RequestParam String routineTitle, @RequestParam String routineContent) {
 
         //운동 루틴 영상들 임시 저장소
         VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
@@ -320,7 +349,7 @@ public class VideoController {
         }
 
         //운동 루틴 저장하기
-        int result = videoService.insertVideoRoutine(
+        Long routineId  = videoService.insertVideoRoutine(
                 youtubeVideoList != null ? youtubeVideoList : Collections.emptyList(),
                 uploadedVideoList != null ? uploadedVideoList : Collections.emptyList(),
                 routineTitle, routineContent
@@ -329,8 +358,19 @@ public class VideoController {
         //루틴 영상 세션 초기화
         session.removeAttribute("videoRoutineResult");
 
-        //영상 루틴 출력해줘야함
-        return "";
+        //루틴 아이디를 통해 루틴 영상 정보 조회
+        List<VideoRoutineSessionData> routineVideoList = postService.getRoutineById(routineId);
+
+        // 루틴 ID, 메시지, 루틴 영상 리스트를 함께 리턴
+        Map<String, Object> response = new HashMap<>();
+        response.put("routineId", routineId);
+        response.put("message", "루틴이 성공적으로 저장되었습니다");
+        response.put("routineVideos", routineVideoList);
+
+        log.info("출력 될 영상 정보 : {}", routineVideoList);
+
+        //영상 루틴 출력
+        return ResponseEntity.ok(response);
     }
 
     //루틴 삭제
@@ -381,8 +421,6 @@ public class VideoController {
             uploadVideoList = new VideoRoutineSessionData();
         }
 
-        //만약에 전체 루틴 생성 그만두게 되면 세션에서 이 값은 삭제해야 할듯
-        //그리고 이 영상을 삭제하는 버튼을 누를때도 삭제해야함
         // 새 업로드된 영상 추가
         uploadVideoList.getUploadVideoList().add(videoDTO);
 
@@ -392,6 +430,8 @@ public class VideoController {
         VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
 
         log.info("루틴 영상 리스트 : {}, 사이즈 : {} ", result, (result.getYoutubeVideoList().size() + result.getUploadVideoList().size()));
+
+        log.info("나의 영상 정보가 넘어갔는지 확인 {}", result);
 
         return ResponseEntity.ok(videoDTO);
     }
@@ -403,18 +443,16 @@ public class VideoController {
                                               @RequestParam("part") String part,
                                               @RequestParam("sequence") int sequence,
                                               @RequestParam("restSecondsAfter") int restSecondsAfter,
-                                              HttpSession session) throws CustomException {
+                                              HttpSession session) {
 
         System.out.println(restSecondsAfter);
-
-
 
         //내가 올린 유튜브 url
         YoutubeVideo directYoutubeVideo;
         try {
             directYoutubeVideo = videoService.directYoutubeUrl(url, part, sequence, restSecondsAfter);
-        } catch (CustomException e) {
-            // 예외 발생 시 메시지와 상태 코드 반환
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            // 잘못된 요청에 대한 예외 처리
             return ResponseEntity.badRequest().body(e.getMessage());
         } catch (Exception e) {
             // 그 외 서버 에러
@@ -437,6 +475,8 @@ public class VideoController {
         VideoRoutineSessionData result = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
 
         log.info("루틴 영상 리스트 : {}, 사이즈 : {} ", result, (result.getYoutubeVideoList().size() + result.getUploadVideoList().size()));
+
+        log.info("내가 가져온 유튜브 영상 {}", directYoutubeVideo);
 
         //저장한 유튜브 url 반환
         return ResponseEntity.ok(directYoutubeVideo);

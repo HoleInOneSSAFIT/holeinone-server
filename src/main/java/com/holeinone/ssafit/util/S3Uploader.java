@@ -9,7 +9,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -52,14 +51,19 @@ public class S3Uploader {
     }
 
     //파일 삭제
-    public void delete(String fileUrl) {
-
-        String key = extractKeyFromUrl(fileUrl);
-
-        s3Client.deleteObject(builder ->
-                builder.bucket(bucket)
-                        .key(key)
-                        .build());
+    public boolean delete(String fileUrl) {
+        try {
+            String key = extractKeyFromUrl(fileUrl);
+            s3Client.deleteObject(builder ->
+                    builder.bucket(bucket)
+                            .key(key)
+                            .build());
+            return true;
+        } catch (Exception e) {
+            // 로그 남기기
+            log.error("S3 삭제 실패: {}", e.getMessage());
+            return false;
+        }
     }
 
     //파일 경로+파일명 추출

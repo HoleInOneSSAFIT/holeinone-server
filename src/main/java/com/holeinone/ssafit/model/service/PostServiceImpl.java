@@ -1,6 +1,5 @@
 package com.holeinone.ssafit.model.service;
 
-import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dao.PostDao;
 import com.holeinone.ssafit.model.dao.UserDao;
 import com.holeinone.ssafit.model.dao.VideoDao;
@@ -37,7 +36,7 @@ public class PostServiceImpl implements PostService{
 
         // 루틴이 존재하지 않을 경우 예외 발생
         if (routineVideoList == null || routineVideoList.isEmpty()) {
-            throw new CustomException("해당 루틴 ID(" + routineId + ")에 대한 영상 정보가 존재하지 않습니다.");
+            throw new IllegalArgumentException("해당 루틴 ID(" + routineId + ")에 대한 영상 정보가 존재하지 않습니다.");
         }
 
         // 루틴 영상을 담을 리스트
@@ -53,7 +52,7 @@ public class PostServiceImpl implements PostService{
                 if (youtubeVideo != null) {
                     videoRoutineSessionData.getYoutubeVideoList().add(youtubeVideo);
                 } else {
-                    throw new CustomException("해당 유튜브 영상 ID(" + routineVideo.getYoutubeVideoId() + ")에 대한 정보가 존재하지 않습니다.");
+                    throw new IllegalStateException("해당 유튜브 영상 ID(" + routineVideo.getYoutubeVideoId() + ")에 대한 정보가 존재하지 않습니다.");
                 }
             }
 
@@ -63,7 +62,7 @@ public class PostServiceImpl implements PostService{
                 if (uploadedVideo != null) {
                     videoRoutineSessionData.getUploadVideoList().add(uploadedVideo);
                 } else {
-                    throw new CustomException("해당 업로드 영상 ID(" + routineVideo.getUploadedVideoId() + ")에 대한 정보가 존재하지 않습니다.");
+                    throw new IllegalStateException("해당 업로드 영상 ID(" + routineVideo.getUploadedVideoId() + ")에 대한 정보가 존재하지 않습니다.");
                 }
             }
         }
@@ -99,20 +98,19 @@ public class PostServiceImpl implements PostService{
 
                 //post 테이블 썸네일 url 등록
                 result = postDao.postRoutinethumbnailUrl(postInfo);
-                
+
                 //파일 테이블에 등록할 값 세팅
                 PostFile postFile = new PostFile();
                 postFile.setFileUrl(thumbnailUrl); //파일 URL
                 postFile.setOriginalFilename(postDetailInfo.getThumbnail().getOriginalFilename()); //파일 원본 이름
                 postFile.setFileType("THUMBNAIL_IMAGE"); //파일 타입
                 postFile.setPostId(postInfo.getPostId()); //게시글 아이디
-                
+
                 //게시글 파일 저장
                 result = postDao.postDaoFileInsert(postFile);
 
-
             } catch (IOException e) {
-                throw new CustomException("썸네일 업로드 실패: " + e.getMessage());
+                throw new RuntimeException("썸네일 업로드 실패: " + e.getMessage(), e);
             }
         }
 
@@ -141,7 +139,7 @@ public class PostServiceImpl implements PostService{
                 result = postDao.postDaoFileInsert(postFile);
 
             } catch (IOException e) {
-                throw new CustomException("파일 업로드 실패: " + e.getMessage());
+                throw new RuntimeException("파일 업로드 실패: " + e.getMessage(), e);
             }
         }
 
