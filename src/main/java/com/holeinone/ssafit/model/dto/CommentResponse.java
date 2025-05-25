@@ -19,4 +19,7 @@ public class CommentResponse {
     private String profileImage;
     private String username;
     private String nickname;
+
+    // post
+    private String postTitle;
 }

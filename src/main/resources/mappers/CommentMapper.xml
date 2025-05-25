@@ -16,4 +16,26 @@
         JOIN user u ON c.user_id = u.user_id
         WHERE c.post_id = #{userId}
     </select>
+
+    <select id="selectAllMyComments" parameterType="Long" resultType="CommentResponse">
+        SELECT
+            c.comment_id AS commentId,
+            c.created_at AS createdAt,
+            c.content,
+            u.user_id AS userId,
+            u.profile_image AS profileImage,
+            u.username AS username,
+            u.nickname AS nickname,
+            p.title AS postTitle
+        FROM comment c
+        JOIN user u ON c.user_id = u.user_id
+        JOIN post p ON c.post_id = p.post_id
+        WHERE c.user_id = #{userId}
+        AND c.is_deleted = false
+    </select>
+
+    <insert id="insertComment" parameterType="Comment">
+        INSERT INTO comment (content, created_at, updated_at, is_deleted, depth, user_id, post_id)
+        VALUES (#{content}, NOW(), NOW(), false, 0, #{userId}, #{postId})
+    </insert>
 </mapper>

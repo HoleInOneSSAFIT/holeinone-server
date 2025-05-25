@@ -1,5 +1,6 @@
 package com.holeinone.ssafit.controller;
 
+import com.holeinone.ssafit.model.dto.Comment;
 import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.model.service.UserService;
 import com.holeinone.ssafit.security.JwtUtil;
