@@ -12,6 +12,7 @@ public class CommentResponse {
     // comment
     private Long commentId;
     private Date createdAt;
+    private Date updatedAt;
     private String content;
 
     // user

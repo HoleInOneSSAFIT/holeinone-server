@@ -8,4 +8,6 @@ public interface CommentDao {
     List<CommentResponse> selectAllComments(Long postId);
     List<CommentResponse> selectAllMyComments(Long userId);
     void insertComment(Comment comment);
+    Comment findById(Long CommentId);
+    void updateComment(Comment comment);
 }
