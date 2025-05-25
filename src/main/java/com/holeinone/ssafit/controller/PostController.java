@@ -131,6 +131,13 @@ public class PostController {
         return ResponseEntity.ok(postService.getPopularPosts());
     }
 
+    //루틴 영상 중 하나라도 찾는 부위가 있으면 게시글 반환
+    @GetMapping("/part")
+    public ResponseEntity<List<Post>> getPostsByPart(@RequestParam String part) {
+        List<Post> posts = postService.getPostsByPart(part);
+        return ResponseEntity.ok(posts);
+    }
+
 
 
 }
