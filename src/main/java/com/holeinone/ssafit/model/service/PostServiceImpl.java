@@ -199,5 +199,13 @@ public class PostServiceImpl implements PostService{
     public List<Post> getPostList(Long userId) {
         return postDao.selectPostList(userId);
     }
+    
+    //좋아요 버튼 클릭
+    @Override
+    public int postLike(Long postId) {
+
+        return postDao.postLike(postId);
+    }
+
 
 }
