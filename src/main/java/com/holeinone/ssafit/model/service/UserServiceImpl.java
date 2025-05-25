@@ -65,7 +65,7 @@ public class UserServiceImpl implements UserService {
         }
 
         // 토큰 생성
-        String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole());
+        String accessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getUserId(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getUsername());
 
         // DB에 리프레시 토큰 저장
@@ -90,7 +90,7 @@ public class UserServiceImpl implements UserService {
         if(user == null) throw new RuntimeException("토큰이 존재하지 않습니다.");
 
         // 새 토큰 발급하기
-        String newAccessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getRole());
+        String newAccessToken = jwtUtil.generateAccessToken(user.getUsername(), user.getUserId(), user.getRole());
         String newRefreshToken = jwtUtil.generateRefreshToken(user.getUsername());
 
         // rotate하기: 기존의 토큰은 null로 하고, 새로운 토큰 업데이트 하기

@@ -23,10 +23,11 @@ public class JwtUtil {
     }
 
     // Access Token 생성
-    public String generateAccessToken(String username, String role) {
+    public String generateAccessToken(String username, Long userId, String role) {
         Date now = new Date();
         return Jwts.builder()
                 .setSubject(username)
+                .claim("userId", userId)
                 .claim("role", role)
                 .setIssuedAt(now)
                 .setExpiration(new Date(now.getTime() + ACCESS_MS))
@@ -47,6 +48,10 @@ public class JwtUtil {
 
     public String extractUsername(String token) {
         return claims(token).getSubject();
+    }
+
+    public Long extractUserId(String token) {
+        return claims(token).get("userId", Long.class);
     }
 
     public String extractUserRole(String token) {

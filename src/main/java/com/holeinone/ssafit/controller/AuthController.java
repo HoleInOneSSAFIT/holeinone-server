@@ -1,7 +1,9 @@
 package com.holeinone.ssafit.controller;
 
+import com.holeinone.ssafit.model.dto.CommentResponse;
 import com.holeinone.ssafit.model.dto.Post;
 import com.holeinone.ssafit.model.dto.User;
+import com.holeinone.ssafit.model.service.CommentService;
 import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.UserService;
 import jakarta.servlet.http.Cookie;
@@ -25,6 +27,7 @@ public class AuthController {
 
     private final UserService userService;
     private final PostService postService;
+    private final CommentService commentService;
 
     // 회원가입
     @PostMapping("/register")
@@ -142,7 +145,21 @@ public class AuthController {
         return ResponseEntity.ok(postList);
     }
 
-    // 사용자가 작성한 댓글 목록
+    // 사용자 본인이 작성한 댓글 목록
+    @GetMapping("/commentlist")
+    public ResponseEntity<List<CommentResponse>> getCommentList(@RequestHeader("AUthorization") String token) throws AccessDeniedException {
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        User user = userService.getInfo(token);
+        Long userId = user.getUserId();
+
+        List<CommentResponse> myCommentList = commentService.getMyCommentList(userId);
+
+        return ResponseEntity.ok(myCommentList);
+    }
+
     // 사용자가 좋아요 한 게시글 목록
 
     // 정보 보여주기 - info page
