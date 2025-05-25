@@ -51,4 +51,15 @@ public interface PostDao {
     // userId로 본인이 작성한 게시글 목록 가져오기
     List<Post> selectPostList(Long userId);
 
+    //좋아요 버튼 클릭
+    int postLike(Long postId);
+
+    //게시글 최신순 조회
+    List<Post> getLatestPosts();
+
+    //게시글 인기순 조회
+    List<Post> getPopularPosts();
+
+    //게시글 운동 부위별 조회
+    List<Post> getPostsByPart(String part);
 }

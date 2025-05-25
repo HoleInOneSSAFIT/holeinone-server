@@ -1,6 +1,5 @@
 package com.holeinone.ssafit.model.service;
 
-import com.holeinone.ssafit.exception.CustomException;
 import com.holeinone.ssafit.model.dto.*;
 import com.holeinone.ssafit.util.S3Uploader;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class VideoServiceImpl implements VideoService {
 
         List<YoutubeVideo> videos = new ArrayList<>();  // 비디오 정보를 저장할 리스트
 
-        System.out.println(part);
+        log.info("유튜브 검색 키워드 : {}", part);
 
         try {
             // YouTube API 서비스 객체를 생성 (Google API와 연결)
@@ -65,8 +65,8 @@ public class VideoServiceImpl implements VideoService {
             String nextPageToken = null; //다음 페이지 토큰 저장용 변수, YouTube API는 검색 페이지를 여러 페이지로 나눠서 줌
             int totalResultsFetched = 0; //지금까지 몇 개의 영상을 가져왔는지 카운팅
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!50
-            final long MAX_RESULTS_PER_REQUEST = 30; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
-            final int MAX_TOTAL_RESULTS = 100; //최종적으로 몇개의 영상을 가져올지
+            final long MAX_RESULTS_PER_REQUEST = 20; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
+            final int MAX_TOTAL_RESULTS = 50; //최종적으로 몇개의 영상을 가져올지
 
             // 페이징을 위한 do-while 루프
             do {
@@ -204,64 +204,70 @@ public class VideoServiceImpl implements VideoService {
     //루틴 운동 영상 저장하기
     @Transactional
     @Override
-    public int insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
-                                  List<UploadedVideo> uploadedVideoList,
-                                  String routineTitle, String routineContent) {
+    public Long insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
+                                   List<UploadedVideo> uploadedVideoList,
+                                   String routineTitle, String routineContent) {
+        try {
+            int result = 0;
 
-        int result = 0;
+            // 루틴 객체 생성 및 insert
+            Routine routine = new Routine();
+            routine.setIsShared(false); // 기본 비공유
+            routine.setRoutineTitle(routineTitle); //루틴 제목
+            routine.setRoutineContent(routineContent); //루틴 내용
+            routine.setUserId((long)1); //임시 데이터
 
-        // 루틴 객체 생성 및 insert
-        Routine routine = new Routine();
-        routine.setIsShared(false); // 기본 비공유
-        routine.setRoutineTitle(routineTitle); //루틴 제목
-        routine.setRoutineContent(routineContent); //루틴 내용
-        routine.setUserId((long)1); //임시 데이터
+            log.info("유저 아이디 {} ", routine.getUserId());
 
-        log.info("유저 아이디 {} ", routine.getUserId());
+            //1. 운동 루틴 생성 -> 아이디 반환
+            videoDao.createRoutine(routine);
+            long routineId = routine.getRoutineId(); // 루틴 ID가 있음
 
-        //1. 운동 루틴 생성 -> 아이디 반환
-        videoDao.createRoutine(routine);
-
-        long routineId = routine.getRoutineId(); // 루틴 ID가 있음
-
-        log.info("루틴 아이디 {} ", routineId);
-
-        //2. 유튜브 영상 저장(유튜브 영상이 있다면)
-        if(youtubeVideoList != null) {
-            for (YoutubeVideo youtubeVideo : youtubeVideoList) {
-                youtubeVideo.setUserId(routine.getUserId()); //유저 아이디 저장
-                // YoutubeVideo 저장
-                videoDao.insertVideoRoutine(youtubeVideo);
-
-                RoutineVideo rv = new RoutineVideo();
-                rv.setSequenceOrder(youtubeVideo.getYoutubeSequence()); //영상 순서 저장
-                rv.setRoutineId(routine.getRoutineId()); //루틴 아이디 저장
-                rv.setYoutubeVideoId(youtubeVideo.getYoutubeVideoId()); //유튜브 아이디 저장
-
-                //영상-루틴 매핑 저장
-                result += videoDao.insertRoutineYoutubeVideo(rv);
+            // 루틴 ID가 할당되지 않은 경우
+            if (routineId == 0) {
+                throw new IllegalStateException("루틴 생성 실패: routineId가 0입니다.");
             }
-        }
 
-        // 3. 업로드 영상 저장
-        if (uploadedVideoList != null) {
-            for (UploadedVideo uploadedVideo : uploadedVideoList) {
-                uploadedVideo.setUserId(routine.getUserId()); //유저 아이디 저장
-                // UploadedVideo 저장
-                videoDao.insertUploadedRoutine(uploadedVideo);
+            log.info("루틴 아이디 {} ", routineId);
 
-                RoutineVideo rv = new RoutineVideo();
-                rv.setSequenceOrder(uploadedVideo.getUploadedSequence()); //영상 순서 저장
-                rv.setRoutineId(routine.getRoutineId()); //루틴 아이디 저장
-                rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId()); //업로드 영상 아이디 저장
+            //2. 유튜브 영상 저장(유튜브 영상이 있다면)
+            if(youtubeVideoList != null) {
+                for (YoutubeVideo youtubeVideo : youtubeVideoList) {
+                    youtubeVideo.setUserId(routine.getUserId()); //유저 아이디 저장
+                    // YoutubeVideo 저장
+                    videoDao.insertVideoRoutine(youtubeVideo);
 
+                    RoutineVideo rv = new RoutineVideo();
+                    rv.setSequenceOrder(youtubeVideo.getYoutubeSequence()); //영상 순서 저장
+                    rv.setRoutineId(routineId); //루틴 아이디 저장
+                    rv.setYoutubeVideoId(youtubeVideo.getYoutubeVideoId()); //유튜브 아이디 저장
 
-                result += videoDao.insertRoutineUploadedVideo(rv);
+                    //영상-루틴 매핑 저장
+                    videoDao.insertRoutineYoutubeVideo(rv);
+                }
             }
+
+            // 3. 업로드 영상 저장
+            if (uploadedVideoList != null) {
+                for (UploadedVideo uploadedVideo : uploadedVideoList) {
+                    uploadedVideo.setUserId(routine.getUserId()); //유저 아이디 저장
+                    // UploadedVideo 저장
+                    videoDao.insertUploadedRoutine(uploadedVideo);
+
+                    RoutineVideo rv = new RoutineVideo();
+                    rv.setSequenceOrder(uploadedVideo.getUploadedSequence()); //영상 순서 저장
+                    rv.setRoutineId(routineId); //루틴 아이디 저장
+                    rv.setUploadedVideoId(uploadedVideo.getUploadedVideoId()); //업로드 영상 아이디 저장
+
+                    videoDao.insertRoutineUploadedVideo(rv);
+                }
+            }
+
+            return routineId;
+        } catch (Exception e) {
+            log.error("루틴 저장 중 오류 발생", e);
+            throw new RuntimeException("루틴 저장 중 오류가 발생했습니다: " + e.getMessage());
         }
-
-        return result;
-
     }
     
     //영상 직접 업로드
@@ -287,13 +293,13 @@ public class VideoServiceImpl implements VideoService {
 
     //내가 올린 유튜브 영상
     @Override
-    public YoutubeVideo directYoutubeUrl(String url, String part, int sequence, int restSecondsAfter) throws CustomException {
+    public YoutubeVideo directYoutubeUrl(String url, String part, int sequence, int restSecondsAfter) {
         //1. 유튜브 url에서 아이디 추출
         String videoId = extractVideoId(url);
 
         //url이 없으면 유효하지 않다는 메시지 리턴
         if (videoId == null) {
-            throw new CustomException("유효하지 않은 YouTube URL입니다.");
+            throw new IllegalArgumentException("유효하지 않은 YouTube URL입니다.");
         }
 
         //2. YouTube API로 videoId 기반 영상 정보 조회
@@ -316,7 +322,7 @@ public class VideoServiceImpl implements VideoService {
             List<Video> items = videoResponse.getItems();
 
             if (items == null || items.isEmpty()) {
-                throw new CustomException("해당 영상 정보를 찾을 수 없습니다.");
+                throw new IllegalStateException("해당 영상 정보를 찾을 수 없습니다.");
             }
 
             Video video = items.get(0); //영상 리스트 중 첫 번째 영상 객체 꺼내기
@@ -337,21 +343,21 @@ public class VideoServiceImpl implements VideoService {
             youtubeVideo.setUserId((long) 1); //임시 데이터
 
             //유튜브 ID 값 반환 받기
-//            int youtubeVideoResultId = videoDao.insertVideoRoutine(youtubeVideo);
-//            log.info("유튜브 ID : {} ", youtubeVideo.getYoutubeVideoId());
+//        int youtubeVideoResultId = videoDao.insertVideoRoutine(youtubeVideo);
+//        log.info("유튜브 ID : {} ", youtubeVideo.getYoutubeVideoId());
 //
-//            //저장한 유튜브 객체 반환(아이디를 통해 조회)
-//            YoutubeVideo savedVideo = videoDao.selectYoutubeVideoById(Math.toIntExact(youtubeVideo.getYoutubeVideoId()));
+//        //저장한 유튜브 객체 반환(아이디를 통해 조회)
+//        YoutubeVideo savedVideo = videoDao.selectYoutubeVideoById(Math.toIntExact(youtubeVideo.getYoutubeVideoId()));
 
             //저장한 영상 리턴
             return youtubeVideo;
 
-        } catch (CustomException e) {
-            // CustomException은 그대로 던짐
-            throw e;
+        } catch (IOException | GeneralSecurityException e) {
+            log.error("YouTube API 통신 오류: {}", e.getMessage(), e);
+            throw new RuntimeException("YouTube API 통신 중 오류가 발생했습니다.");
         } catch (Exception e) {
-            log.error("YouTube 영상 조회 중 오류 발생: {}", e.getMessage(), e);
-            throw new CustomException("서버 오류가 발생했습니다.");
+            log.error("YouTube 영상 조회 중 알 수 없는 오류 발생: {}", e.getMessage(), e);
+            throw new RuntimeException("서버 오류가 발생했습니다.");
         }
     }
 
@@ -402,6 +408,14 @@ public class VideoServiceImpl implements VideoService {
             log.error("루틴 삭제 중 오류 발생", e);
             throw new RuntimeException("루틴 삭제 실패", e);
         }
+    }
+
+    //s3에 올라온 임시 루틴 영상 삭제하기
+    @Override
+    public boolean tempUploadRoutineDelete(String uploadUrl) {
+
+        //파일에서 삭제
+        return s3Uploader.delete(uploadUrl);
     }
 
     //유튜브 url 아이디 추출

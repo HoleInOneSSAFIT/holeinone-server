@@ -59,6 +59,8 @@ public class PostController {
         //루틴 아이디를 통해 루틴 영상 정보 조회
         List<VideoRoutineSessionData> routineVideoList = postService.getRoutineById(routineId);
 
+        log.info("특정 루틴 정보 조회 : {}", routineVideoList);
+
         return ResponseEntity.ok(routineVideoList);
     }
 
@@ -97,7 +99,46 @@ public class PostController {
 
         List<Post> postList = postService.listPosts();
 
+        log.info("전체 게시글 조회하기 : {}", postList);
+
         return ResponseEntity.ok(postList);
+    }
+
+    //게시글 좋아요
+    @PostMapping("/like/{postId}")
+    public ResponseEntity<?> PostLike(@PathVariable Long postId) {
+        
+        //좋아요 버튼 클릭
+        int result = postService.postLike(postId);
+
+        return ResponseEntity.ok("");
+
+    }
+
+    //게시글 최신순 조회
+    @GetMapping("/latest")
+    public ResponseEntity<List<Post>> getLatestPosts() {
+        List<Post> posts = postService.getLatestPosts();
+        return ResponseEntity.ok(posts);
+    }
+
+    //게시글 인기순 조회
+    /**view_count: 1점
+     like_count: 3점
+     comment_count: 5점**/
+    @GetMapping("/popular")
+    public ResponseEntity<List<Post>> getPopularPosts() {
+        return ResponseEntity.ok(postService.getPopularPosts());
+    }
+
+    //루틴 영상 중 하나라도 찾는 부위가 있으면 게시글 반환
+    @GetMapping("/part")
+    public ResponseEntity<List<Post>> getPostsByPart(@RequestParam String part) {
+
+        log.info("커뮤니티 게시글 부위별 검색: {} ", part);
+
+        List<Post> posts = postService.getPostsByPart(part);
+        return ResponseEntity.ok(posts);
     }
 
 
