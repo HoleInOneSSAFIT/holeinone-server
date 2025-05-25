@@ -115,6 +115,22 @@ public class PostController {
 
     }
 
+    //게시글 최신순 조회
+    @GetMapping("/latest")
+    public ResponseEntity<List<Post>> getLatestPosts() {
+        List<Post> posts = postService.getLatestPosts();
+        return ResponseEntity.ok(posts);
+    }
+
+    //게시글 인기순 조회
+    /**view_count: 1점
+     like_count: 3점
+     comment_count: 5점**/
+    @GetMapping("/popular")
+    public ResponseEntity<List<Post>> getPopularPosts() {
+        return ResponseEntity.ok(postService.getPopularPosts());
+    }
+
 
 
 }

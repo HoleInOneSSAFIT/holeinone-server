@@ -53,4 +53,10 @@ public interface PostDao {
 
     //좋아요 버튼 클릭
     int postLike(Long postId);
+
+    //게시글 최신순 조회
+    List<Post> getLatestPosts();
+
+    //게시글 인기순 조회
+    List<Post> getPopularPosts();
 }
