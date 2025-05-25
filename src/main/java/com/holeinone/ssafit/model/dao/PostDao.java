@@ -59,4 +59,7 @@ public interface PostDao {
 
     //게시글 인기순 조회
     List<Post> getPopularPosts();
+
+    //게시글 운동 부위별 조회
+    List<Post> getPostsByPart(String part);
 }

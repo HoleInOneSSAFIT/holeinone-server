@@ -219,5 +219,11 @@ public class PostServiceImpl implements PostService{
         return postDao.getPopularPosts();
     }
 
+    //게시글 운동 부위별 조회
+    @Override
+    public List<Post> getPostsByPart(String part) {
+        return postDao.getPostsByPart(part);
+    }
+
 
 }
