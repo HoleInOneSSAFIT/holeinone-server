@@ -35,4 +35,14 @@ public class CommentServiceImpl implements CommentService {
         return commentDao.selectAllMyComments(userId);
     }
 
+    @Override
+    public Comment findById(Long commentId) {
+        return commentDao.findById(commentId);
+    }
+
+    @Override
+    public void updateComment(Comment comment){
+        commentDao.updateComment(comment);
+    }
+
 }

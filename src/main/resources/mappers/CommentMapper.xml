@@ -7,6 +7,7 @@
         SELECT
             c.comment_id AS commentId,
             c.created_at AS createAt,
+            c.updated_at AS updatedAt,
             c.content,
             u.user_id AS userId,
             u.profile_image AS profileImage,
@@ -21,6 +22,7 @@
         SELECT
             c.comment_id AS commentId,
             c.created_at AS createdAt,
+            c.updated_at AS updatedAt,
             c.content,
             u.user_id AS userId,
             u.profile_image AS profileImage,
@@ -38,4 +40,16 @@
         INSERT INTO comment (content, created_at, updated_at, is_deleted, depth, user_id, post_id)
         VALUES (#{content}, NOW(), NOW(), false, 0, #{userId}, #{postId})
     </insert>
+
+    <select id="findById" parameterType="Long" resultType="Comment">
+        SELECT * FROM comment
+        WHERE comment_id = #{commentId}
+    </select>
+
+    <update id="updateComment" parameterType="Comment">
+        UPDATE comment
+        SET content = #{content},
+            updated_at = NOW()
+        WHERE comment_id = #{commentId}
+    </update>
 </mapper>

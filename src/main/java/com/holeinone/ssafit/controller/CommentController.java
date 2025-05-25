@@ -3,15 +3,19 @@ package com.holeinone.ssafit.controller;
 import com.holeinone.ssafit.model.dto.Comment;
 import com.holeinone.ssafit.model.dto.CommentRequest;
 import com.holeinone.ssafit.model.dto.CommentResponse;
+import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.model.service.CommentService;
+import com.holeinone.ssafit.model.service.UserService;
 import com.holeinone.ssafit.security.JwtUtil;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -25,6 +29,7 @@ public class CommentController {
 
     private final CommentService commentService;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     // 게시글에 대한 댓글 조회
     @GetMapping
@@ -53,6 +58,34 @@ public class CommentController {
     }
 
     // 댓글 수정
+    @PutMapping("/{commentId}")
+    public ResponseEntity<String> updateComment(@RequestHeader("Authorization") String token,
+                                                @PathVariable Long commentId,
+                                                @RequestBody CommentRequest request) {
+        // 파싱 먼저 하고
+        if(token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        User user = userService.getInfo(token);
+        Long userId = user.getUserId();
+
+        Comment comment = commentService.findById(commentId);
+
+        if (comment == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("존재하지 않는 댓글입니다.");
+        }
+
+        if (!comment.getUserId().equals(userId)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("본인 댓글만 수정할 수 있습니다.");
+        }
+
+        comment.setContent(request.getContent());
+
+        commentService.updateComment(comment);
+
+        return ResponseEntity.ok("댓글이 성공적으로 수정되었습니다.");
+    }
 
     // 댓글 삭제
 }
