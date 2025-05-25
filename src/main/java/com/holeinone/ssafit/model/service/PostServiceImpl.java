@@ -207,5 +207,17 @@ public class PostServiceImpl implements PostService{
         return postDao.postLike(postId);
     }
 
+    //게시글 최신순 조회
+    @Override
+    public List<Post> getLatestPosts() {
+        return postDao.getLatestPosts();
+    }
+
+    //게시글 인기순 조회
+    @Override
+    public List<Post> getPopularPosts() {
+        return postDao.getPopularPosts();
+    }
+
 
 }

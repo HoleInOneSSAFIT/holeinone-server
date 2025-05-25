@@ -109,7 +109,7 @@
     </select>
 
     <!--ID로 본인이 작성한 게시글 목록 가져오기-->
-    <select id="selectPostList" parameterType="long" resultType="post">
+    <select id="selectPostList" parameterType="long" resultType="Post">
         SELECT * FROM post
         WHERE user_id = #{userId}
     </select>
@@ -121,5 +121,19 @@
         WHERE post_id = #{postId}
     </update>
 
+    <!--게시글 최신순 조회-->
+    <select id="getLatestPosts" resultType="Post">
+        SELECT *
+        FROM post
+        ORDER BY created_at DESC
+    </select>
+
+    <!--게시글 인기순 조회-->
+    <select id="getPopularPosts" resultType="Post">
+        SELECT *,
+               (view_count * 1 + like_count * 3 + comment_count * 5) AS popularity_score
+        FROM post
+        ORDER BY popularity_score DESC, created_at DESC
+    </select>
 
 </mapper>
