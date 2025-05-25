@@ -59,6 +59,8 @@ public class PostController {
         //루틴 아이디를 통해 루틴 영상 정보 조회
         List<VideoRoutineSessionData> routineVideoList = postService.getRoutineById(routineId);
 
+        log.info("특정 루틴 정보 조회 : {}", routineVideoList);
+
         return ResponseEntity.ok(routineVideoList);
     }
 
@@ -97,7 +99,20 @@ public class PostController {
 
         List<Post> postList = postService.listPosts();
 
+        log.info("전체 게시글 조회하기 : {}", postList);
+
         return ResponseEntity.ok(postList);
+    }
+
+    //게시글 좋아요
+    @PostMapping("/like/{postId}")
+    public ResponseEntity<?> PostLike(@PathVariable Long postId) {
+        
+        //좋아요 버튼 클릭
+        int result = postService.postLike(postId);
+
+        return ResponseEntity.ok("");
+
     }
 
 

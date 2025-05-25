@@ -32,4 +32,7 @@ public interface PostService {
 
     // userId로 본인이 작성한 게시글 목록 가져오기
     List<Post> getPostList(Long userId);
+
+    //좋아요 버튼 클릭
+    int postLike(Long postId);
 }
