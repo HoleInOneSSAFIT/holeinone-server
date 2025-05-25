@@ -7,11 +7,14 @@ import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.model.service.CommentService;
 import com.holeinone.ssafit.model.service.UserService;
 import com.holeinone.ssafit.security.JwtUtil;
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.javassist.NotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -88,4 +91,20 @@ public class CommentController {
     }
 
     // 댓글 삭제
+    @DeleteMapping("/{commentId}")
+    public ResponseEntity<String> deleteComment(@RequestHeader("Authorization") String token,
+                                                @PathVariable Long commentId)
+            throws AccessDeniedException, NotFoundException {
+        // 파싱 먼저 하고
+        if(token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        User user = userService.getInfo(token);
+        Long userId = user.getUserId();
+
+        String deleteResult = commentService.deleteComment(commentId, userId);
+
+        return ResponseEntity.ok((deleteResult));
+    }
 }

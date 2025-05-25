@@ -10,4 +10,6 @@ public interface CommentDao {
     void insertComment(Comment comment);
     Comment findById(Long CommentId);
     void updateComment(Comment comment);
+    Boolean hasChildComment(Long commentId); // 댓글 삭제할때 대댓글 있는지 확인
+    void softDeleteComment(Long commentId);
 }
