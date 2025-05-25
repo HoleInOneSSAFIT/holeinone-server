@@ -6,7 +6,7 @@
     <select id="selectAllComments" parameterType="Long" resultType="CommentResponse">
         SELECT
             c.comment_id AS commentId,
-            c.created_at AS createAt,
+            c.created_at AS createdAt,
             c.updated_at AS updatedAt,
             c.content,
             u.user_id AS userId,
@@ -14,8 +14,9 @@
             u.username AS username,
             u.nickname AS nickname
         FROM comment c
-        JOIN user u ON c.user_id = u.user_id
-        WHERE c.post_id = #{userId}
+                 JOIN user u ON c.user_id = u.user_id
+        WHERE c.post_id = #{postId}
+          AND c.is_deleted = false
     </select>
 
     <select id="selectAllMyComments" parameterType="Long" resultType="CommentResponse">
