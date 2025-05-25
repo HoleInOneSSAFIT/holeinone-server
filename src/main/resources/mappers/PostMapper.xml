@@ -136,7 +136,7 @@
         ORDER BY popularity_score DESC, created_at DESC
     </select>
 
-    <!---->
+    <!--게시글 운동 부위별 조회-->
     <select id="getPostsByPart" parameterType="string" resultType="Post">
         SELECT DISTINCT p.*
         FROM post p
