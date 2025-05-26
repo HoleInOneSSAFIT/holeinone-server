@@ -11,18 +11,18 @@ import java.util.List;
 public interface VideoService {
     
     //유튜브 영상 검색
-    List<YoutubeVideo> searchVideos(String part, String duration, String recommend);
+    List<YoutubeVideo> searchVideos(String part, String duration, String recommend, String token);
     
     //루틴에 운동 영상 저장하기
     Long insertVideoRoutine(List<YoutubeVideo> youtubeVideoList,
                            List<UploadedVideo> uploadedVideoList,
-                           String routineTitle, String routineContent);
+                           String routineTitle, String routineContent, String token);
 
     //영상 직접 업로드
-    UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo);
+    UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo, String token);
 
     //내가 올린 유튜브 url
-    YoutubeVideo directYoutubeUrl(String url, String part, int sequence ,int restSecondsAfter);
+    YoutubeVideo directYoutubeUrl(String url, String part, int sequence ,int restSecondsAfter, String token);
 
     //루틴 아이디를 통해 루틴 삭제
     int routineIdDelete(long routineId);

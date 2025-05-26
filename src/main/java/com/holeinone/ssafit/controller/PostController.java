@@ -25,10 +25,10 @@ public class PostController {
 
     //게시글 등록( 텍스트 필드 + 파일을 한꺼번에 받을 때 명시)
     @PostMapping(value = "/insert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> postRoutine(@ModelAttribute PostDetailInfo postDetailInfo) {
+    public ResponseEntity<?> postRoutine(@ModelAttribute PostDetailInfo postDetailInfo, @RequestHeader("Authorization") String token) {
         
         // 게시글 정보 전달 후 게시글 아이디 반환
-        Long postId  = postService.postRoutine(postDetailInfo);
+        Long postId  = postService.postRoutine(postDetailInfo, token);
 
         return ResponseEntity.ok(Map.of("postId", postId));
     }
