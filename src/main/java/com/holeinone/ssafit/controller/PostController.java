@@ -3,8 +3,10 @@ package com.holeinone.ssafit.controller;
 import com.holeinone.ssafit.model.dto.*;
 import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.VideoService;
+import com.holeinone.ssafit.util.AuthUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,6 +24,7 @@ public class PostController {
 
     private final PostService postService;
     private final VideoService videoService;
+    private final AuthUtil authUtil;
 
     //게시글 등록( 텍스트 필드 + 파일을 한꺼번에 받을 때 명시)
     @PostMapping(value = "/insert", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -36,20 +39,34 @@ public class PostController {
     // 게시글 상세 정보 가져오기
     @GetMapping("/{postId}")
     public ResponseEntity<Post> getPost(@PathVariable Long postId) {
-        log.info("get post by id: {}", postId);
-        return ResponseEntity.ok(postService.getPost(postId));
+
+        Post post = postService.getPost(postId);
+
+        log.info("게시글 상세 젇보 : {}", post);
+
+        return ResponseEntity.ok(post);
     }
 
     // 게시글 파일 정보 가져오기
     @GetMapping("/{postId}/files")
     public ResponseEntity<List<PostFile>> getPostFiles(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getFiles(postId));
+
+        List<PostFile> getPostFile = postService.getFiles(postId);
+
+        log.info("게시글 파일 정보 가져오기 : {}", getPostFile);
+
+        return ResponseEntity.ok(getPostFile);
     }
 
     // 루틴 정보 가져오기
     @GetMapping("/routine/{routineId}/info")
     public ResponseEntity<Routine> getRoutine(@PathVariable Long routineId) {
-        return ResponseEntity.ok(postService.getRoutine(routineId));
+
+        Routine routineInfo = postService.getRoutine(routineId);
+        
+        log.info("루틴 정보(제목 내용) : {}", routineInfo);
+        
+        return ResponseEntity.ok(routineInfo);
     }
 
     //특정 루틴 정보 조회(게시글 작성 시 함께 보여줄 용도)
@@ -78,6 +95,7 @@ public class PostController {
         User postUserList = postService.getPostUser(postId);
 
         //유저의 프로필 이미지 정보도 가져오기!!!!!!!!!!!!!!!!
+        log.info("게시글 작성한 유저 정보 : {}", postUserList);
 
         return ResponseEntity.ok(postUserList);
     }
@@ -141,6 +159,56 @@ public class PostController {
         return ResponseEntity.ok(posts);
     }
 
+    // 게시글 수정
+    @PutMapping(value = "/update/{postId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> updatePost(
+            @PathVariable Long postId,
+            @ModelAttribute PostDetailInfo postDetailInfo,
+            @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestHeader("Authorization") String token) {
+
+        try {
+            // 파일 정보 로그 출력
+            if (files != null && !files.isEmpty()) {
+                log.info("수정 요청된 파일 수: {}", files.size());
+                for (MultipartFile file : files) {
+                    log.info("파일 이름: {}, 크기: {}, 타입: {}",
+                            file.getOriginalFilename(), file.getSize(), file.getContentType());
+                }
+            } else {
+                log.info("첨부된 파일 없음");
+            }
+
+            // PostDetailInfo에 파일 목록 설정
+            postDetailInfo.setFiles(files);
+
+            // 게시글 수정 처리
+            postService.updatePost(postId, postDetailInfo, token);
+
+            return ResponseEntity.ok("게시글 수정 완료");
+
+        } catch (Exception e) {
+            log.error("게시글 수정 중 오류 발생", e);
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("게시글 수정 실패: " + e.getMessage());
+        }
+    }
+
+    //현재 접속한 유저 정보 제공
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@RequestHeader("Authorization") String token) {
+        try {
+
+            //유저 아이디 반환
+            Long userId = authUtil.extractUserIdFromToken(token);
+
+            return ResponseEntity.ok(userId);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+    }
 
 
 }

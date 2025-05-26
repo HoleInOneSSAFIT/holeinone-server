@@ -44,4 +44,7 @@ public interface PostService {
 
     //게시글 운동 부위별 조회
     List<Post> getPostsByPart(String part);
+
+    //게시글 수정
+    void updatePost(Long postId, PostDetailInfo postDetailInfo, String token);
 }

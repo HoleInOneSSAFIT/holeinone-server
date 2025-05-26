@@ -62,4 +62,17 @@ public interface PostDao {
 
     //게시글 운동 부위별 조회
     List<Post> getPostsByPart(String part);
+
+    // 게시글 정보 수정 (루틴은 수정하지 않음)
+    int updatePost(Post post);
+
+    // 게시글 관련 파일 삭제
+    //todo: 안쓰면 지우기
+    int deleteFiles(Long postId);
+
+    // 게시글에 새로운 파일 추가
+    int insertFile(PostFile postFile);
+
+
+    void deleteFileById(Long postFileId);
 }

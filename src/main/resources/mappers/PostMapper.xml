@@ -148,4 +148,31 @@
         ORDER BY p.created_at DESC
     </select>
 
+    <!-- 게시글 기본 정보 수정 -->
+    <update id="updatePost" parameterType="Post">
+        UPDATE post
+        SET
+            title = #{title},
+            content = #{content},
+            updated_at = NOW()
+        WHERE post_id = #{postId}
+    </update>
+
+    <!-- 게시글 첨부파일 전체 삭제 -->
+    <delete id="deleteFiles" parameterType="long">
+        DELETE FROM post_file WHERE post_id = #{postId}
+    </delete>
+
+    <!-- 게시글 첨부파일 개별 삽입 -->
+    <insert id="insertFile" parameterType="PostFile" useGeneratedKeys="true" keyProperty="postFileId">
+        INSERT INTO post_file (file_url, original_filename, file_type, post_id, uploaded_at)
+        VALUES (#{fileUrl}, #{originalFilename}, #{fileType}, #{postId}, NOW())
+    </insert>
+
+    <!--게시글 첨부파일 개별 삭제-->
+    <delete id="deleteFileById" parameterType="long">
+        DELETE FROM post_file
+        WHERE post_file_id = #{postFileId}
+    </delete>
+
 </mapper>
