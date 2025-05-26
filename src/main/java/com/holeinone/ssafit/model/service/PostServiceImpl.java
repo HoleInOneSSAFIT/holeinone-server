@@ -4,6 +4,7 @@ import com.holeinone.ssafit.model.dao.PostDao;
 import com.holeinone.ssafit.model.dao.UserDao;
 import com.holeinone.ssafit.model.dao.VideoDao;
 import com.holeinone.ssafit.model.dto.*;
+import com.holeinone.ssafit.util.AuthUtil;
 import com.holeinone.ssafit.util.S3Uploader;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,11 +21,13 @@ public class PostServiceImpl implements PostService{
     private final PostDao postDao;
     private final S3Uploader s3Uploader;
     private final UserDao userDao;
+    private final AuthUtil authUtil;
 
-    public PostServiceImpl(PostDao postDao, S3Uploader s3Uploader, UserDao userDao) {
+    public PostServiceImpl(PostDao postDao, S3Uploader s3Uploader, UserDao userDao, AuthUtil authUtil) {
         this.postDao = postDao;
         this.s3Uploader = s3Uploader;
         this.userDao = userDao;
+        this.authUtil = authUtil;
     }
 
     //루틴 아이디를 통해 루틴 영상 정보 조회
@@ -73,15 +76,18 @@ public class PostServiceImpl implements PostService{
 
     // 게시글 정보 전달 후 게시글 아이디 반환
     @Override
-    public Long postRoutine(PostDetailInfo postDetailInfo) {
+    public Long postRoutine(PostDetailInfo postDetailInfo, String token) {
 
         int result = 0;
+
+        //유저 아이디 반환
+        Long userId = authUtil.extractUserIdFromToken(token);
 
         // 1. 게시글 정보 삽입(썸네일 url 나중에 저장)
         Post postInfo = new Post();
         postInfo.setTitle(postDetailInfo.getTitle()); //제목
         postInfo.setContent(postDetailInfo.getContent()); //내용
-        postInfo.setUserId((long) 1); //유저 아이디(임시)
+        postInfo.setUserId(userId); //유저 아이디(임시)
         postInfo.setRoutineId(postDetailInfo.getRoutineId()); //루틴 아이디
 
         //게시글 등록 하고 게시글 ID 반환받기

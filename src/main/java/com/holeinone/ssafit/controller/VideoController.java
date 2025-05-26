@@ -33,11 +33,12 @@ public class VideoController {
      * @param part 운동 부위(특정 or 전체), duration 영상 길이(특정 or 전체), recommend 추천 방식(필수)
      * @return 영상 제목 + 링크 목록
      */
+    //todo : 유저 완료
     @GetMapping("/search")
     public ResponseEntity<?> searchYoutubeVideos(@RequestParam String part,
                                                  @RequestParam(required = false, defaultValue = "") String duration,
                                                  @RequestParam(required = false, defaultValue = "") String recommend,
-                                                 HttpSession session) {
+                                                 HttpSession session, @RequestHeader("Authorization") String token) {
         try {
             String searchQuery = "운동";
 
@@ -55,7 +56,7 @@ public class VideoController {
 
             //랜덤 영상 리스트(만약 사용자가 내가 뽑아낸 영상을 다 넘겼다면? 어떻게 해야할지 생각이 필요하다)
             //todo: 재추천 로직이 필요한것으로 생각됩니다(기존 리스트랑 겹치지 않게)
-            List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend);
+            List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend, token);
 
             if (videos.isEmpty()) { //만약 영상이 없다면 오류 상태 던지기
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("해당 조건에 맞는 영상이 없습니다.");
@@ -325,8 +326,10 @@ public class VideoController {
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
      **/
     //루틴에 영상들 저장하기
+    //todo : 유저
     @PostMapping("/insertVideoRoutine")
-    public ResponseEntity<?> insertVideo(HttpSession session, @RequestParam String routineTitle, @RequestParam String routineContent) {
+    public ResponseEntity<?> insertVideo(HttpSession session, @RequestParam String routineTitle,
+                                         @RequestParam String routineContent, @RequestHeader("Authorization") String token) {
 
         //운동 루틴 영상들 임시 저장소
         VideoRoutineSessionData routineData = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
@@ -352,7 +355,7 @@ public class VideoController {
         Long routineId  = videoService.insertVideoRoutine(
                 youtubeVideoList != null ? youtubeVideoList : Collections.emptyList(),
                 uploadedVideoList != null ? uploadedVideoList : Collections.emptyList(),
-                routineTitle, routineContent
+                routineTitle, routineContent, token
         );
 
         //루틴 영상 세션 초기화
@@ -393,6 +396,7 @@ public class VideoController {
      * @UploadedVideo 그 외 영상 정보
      * */
     //내가 찍은 영상 올리기
+    //todo: 유저
     @PostMapping("/myUpload")
     public ResponseEntity<UploadedVideo> uploadVideo(@RequestParam("file") MultipartFile file,
                                                      @RequestParam("title") String title,
@@ -400,6 +404,7 @@ public class VideoController {
                                                      @RequestParam("durationSeconds") int durationSeconds,
                                                      @RequestParam("sequence") int sequence,
                                                      @RequestParam("restSecondsAfter") int restSecondsAfter,
+                                                     @RequestHeader("Authorization") String token,
                                                      HttpSession session) {
 
         UploadedVideo uploadedVideo = new UploadedVideo();
@@ -411,7 +416,7 @@ public class VideoController {
         uploadedVideo.setRestSecondsAfter(restSecondsAfter);
 
         //영상 S3에 저장하러가기
-        UploadedVideo videoDTO = videoService.uploadVideo(file, uploadedVideo);
+        UploadedVideo videoDTO = videoService.uploadVideo(file, uploadedVideo, token);
 
         // 세션에서 리스트 꺼내기
         VideoRoutineSessionData uploadVideoList = (VideoRoutineSessionData) session.getAttribute("videoRoutineResult");
@@ -438,19 +443,21 @@ public class VideoController {
 
 
     //내가 유튜브 url 직접 입력
+    //todo: 유저 완료!
     @PostMapping("/directYoutubeUrl")
     public ResponseEntity<?> directYoutubeUrl(@RequestParam("url") String url,
                                               @RequestParam("part") String part,
                                               @RequestParam("sequence") int sequence,
                                               @RequestParam("restSecondsAfter") int restSecondsAfter,
-                                              HttpSession session) {
+                                              HttpSession session,
+                                              @RequestHeader("AUthorization") String token) {
 
         System.out.println(restSecondsAfter);
 
         //내가 올린 유튜브 url
         YoutubeVideo directYoutubeVideo;
         try {
-            directYoutubeVideo = videoService.directYoutubeUrl(url, part, sequence, restSecondsAfter);
+            directYoutubeVideo = videoService.directYoutubeUrl(url, part, sequence, restSecondsAfter, token);
         } catch (IllegalArgumentException | IllegalStateException e) {
             // 잘못된 요청에 대한 예외 처리
             return ResponseEntity.badRequest().body(e.getMessage());

@@ -10,7 +10,7 @@ public interface PostService {
     List<VideoRoutineSessionData> getRoutineById(Long routineId);
 
     // 게시글 정보 전달 후 게시글 아이디 반환
-    Long postRoutine(PostDetailInfo postDetailInfo);
+    Long postRoutine(PostDetailInfo postDetailInfo, String token);
 
     // 게시글 상세 정보 가져오기
     Post getPost(Long postId);
