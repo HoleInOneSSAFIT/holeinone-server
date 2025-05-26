@@ -1,5 +1,7 @@
 package com.holeinone.ssafit.model.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +18,7 @@ public class User {
     private String nickname;
     private String profileImage; // 프로필 사진 경로
     private String gender;
-    private Date birthdate;
+    private LocalDate birthdate;
     private Double height; // 선택사항
     private Double weight; // 선택사항
     private Date joinedAt;

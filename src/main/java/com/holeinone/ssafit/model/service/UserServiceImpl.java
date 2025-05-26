@@ -3,7 +3,8 @@ package com.holeinone.ssafit.model.service;
 import com.holeinone.ssafit.model.dao.UserDao;
 import com.holeinone.ssafit.model.dto.User;
 import com.holeinone.ssafit.security.JwtUtil;
-import java.nio.file.AccessDeniedException;
+import com.holeinone.ssafit.util.S3Uploader;
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,8 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -19,19 +22,24 @@ public class UserServiceImpl implements UserService {
     private final UserDao userDao;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final S3Uploader s3Uploader;
 
+    @Transactional
     @Override
-    public void register(User user) {
-        if(isUsernameExist(user.getUsername())) {
-            throw new IllegalArgumentException("이미 존재하는 아이디 입니다.");
+    public void register(User user, MultipartFile img) throws IOException {
+
+        if (isUsernameExist(user.getUsername()))
+            throw new IllegalArgumentException("이미 존재하는 아이디입니다.");
+
+        // 프로필 사진 - S3 업로드
+        if (img != null && !img.isEmpty()) {
+            String url = s3Uploader.upload(img, "profile-images");
+            user.setProfileImage(url);
         }
 
-        // 비밀번호 해싱
+        // 나머지 정보
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        // role은 User로 고정 - 탈취 방지
         user.setRole("ROLE_USER");
-
         user.setIsActive(true);
         user.setJoinedAt(new Date());
 

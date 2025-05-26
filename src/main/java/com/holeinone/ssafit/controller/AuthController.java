@@ -3,12 +3,14 @@ package com.holeinone.ssafit.controller;
 import com.holeinone.ssafit.model.dto.CommentResponse;
 import com.holeinone.ssafit.model.dto.Post;
 import com.holeinone.ssafit.model.dto.User;
+import com.holeinone.ssafit.model.dto.UserJoinRequest;
 import com.holeinone.ssafit.model.service.CommentService;
 import com.holeinone.ssafit.model.service.PostService;
 import com.holeinone.ssafit.model.service.UserService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -31,14 +34,12 @@ public class AuthController {
 
     // 회원가입
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-        // 필수 항목 누락 체크
-        if (user.getProfileImage() == null || user.getUsername() == null || user.getPassword() == null
-                || user.getName() == null || user.getNickname() == null || user.getGender() == null || user.getBirthdate() == null) {
-            throw new IllegalArgumentException("필수 항목 입력이 누락되었습니다.");
-        }
+    public ResponseEntity<String> register(
+            @ModelAttribute UserJoinRequest dto,
+            @RequestPart(value = "profileImage", required = false) MultipartFile img
+    ) throws IOException {
 
-        userService.register(user);
+        userService.register(dto.toEntity(), img);
         return ResponseEntity.ok("회원가입 성공");
     }
 
@@ -176,7 +177,7 @@ public class AuthController {
 
     // 정보 수정
     @PutMapping("/update")
-    public ResponseEntity<String> update(@RequestBody User user, @RequestHeader("Authorization") String token)
+    public ResponseEntity<String> update(User user, @RequestHeader("Authorization") String token)
             throws AccessDeniedException {
 
         if (user.getPassword() == null || user.getPassword().isBlank()) {
