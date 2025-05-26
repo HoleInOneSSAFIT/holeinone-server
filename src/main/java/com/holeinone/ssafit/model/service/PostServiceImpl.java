@@ -231,5 +231,92 @@ public class PostServiceImpl implements PostService{
         return postDao.getPostsByPart(part);
     }
 
+    //게시글 수정
+    @Transactional
+    @Override
+    public void updatePost(Long postId, PostDetailInfo postDetailInfo, String token) {
+        Long userId = authUtil.extractUserIdFromToken(token);
+
+        Post existingPost = postDao.getPost(postId);
+        if (existingPost == null) {
+            throw new IllegalArgumentException("존재하지 않는 게시글입니다.");
+        }
+
+        if (!existingPost.getUserId().equals(userId)) {
+            throw new SecurityException("게시글 수정 권한이 없습니다.");
+        }
+
+        // 게시글 기본 정보 업데이트
+        Post post = new Post();
+        post.setPostId(postId);
+        post.setTitle(postDetailInfo.getTitle());
+        post.setContent(postDetailInfo.getContent());
+        post.setUserId(userId);
+        postDao.updatePost(post);
+
+        // 1. 삭제할 파일만 삭제
+        List<Long> filesToDelete = postDetailInfo.getFilesToDelete(); // 새로 추가된 필드
+        if (filesToDelete != null && !filesToDelete.isEmpty()) {
+            List<PostFile> existingFiles = postDao.getFiles(postId);
+            for (PostFile file : existingFiles) {
+                if (filesToDelete.contains(file.getPostFileId())) {
+                    if (file.getFileUrl() != null) {
+                        s3Uploader.delete(file.getFileUrl()); // S3 삭제
+                    }
+                    postDao.deleteFileById(file.getPostFileId()); // DB 삭제
+                }
+            }
+        }
+
+        // 2. 새로 추가된 파일 저장
+        List<MultipartFile> newFiles = postDetailInfo.getFiles();
+        if (newFiles != null) {
+            for (MultipartFile file : newFiles) {
+                if (!file.isEmpty()) {
+                    try {
+                        String fileUrl = s3Uploader.upload(file, "post-files");
+                        PostFile postFile = new PostFile();
+                        postFile.setPostId(postId);
+                        postFile.setOriginalFilename(file.getOriginalFilename());
+                        postFile.setFileUrl(fileUrl);
+
+                        String contentType = file.getContentType();
+                        if (contentType != null && contentType.startsWith("video")) {
+                            postFile.setFileType("POST_VIDEO");
+                        } else {
+                            postFile.setFileType("POST_IMAGE");
+                        }
+
+                        postDao.insertFile(postFile);
+                    } catch (IOException e) {
+                        throw new RuntimeException("파일 업로드 실패", e);
+                    }
+                }
+            }
+        }
+
+        // 3. 썸네일도 새로 업로드했다면 업데이트
+        MultipartFile newThumbnail = postDetailInfo.getThumbnail();
+        if (newThumbnail != null && !newThumbnail.isEmpty()) {
+            try {
+                String thumbnailUrl = s3Uploader.upload(newThumbnail, "post-thumbnail");
+                post.setThumbnailUrl(thumbnailUrl);
+                postDao.postRoutinethumbnailUrl(post); // 썸네일 URL 업데이트
+
+                PostFile thumbnailFile = new PostFile();
+                thumbnailFile.setFileUrl(thumbnailUrl);
+                thumbnailFile.setOriginalFilename(newThumbnail.getOriginalFilename());
+                thumbnailFile.setFileType("THUMBNAIL_IMAGE");
+                thumbnailFile.setPostId(postId);
+                postDao.postDaoFileInsert(thumbnailFile);
+            } catch (IOException e) {
+                throw new RuntimeException("썸네일 업로드 실패", e);
+            }
+        }
+    }
+
 
 }
+
+
+

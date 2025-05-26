@@ -29,5 +29,7 @@ public class PostDetailInfo {
     //루틴 영상 리스트
     private List<VideoRoutineSessionData> videoRoutineSessionDatas = new ArrayList<>();
 
+    // 삭제할 파일 ID 리스트 추가
+    private List<Long> filesToDelete;
 
 }
