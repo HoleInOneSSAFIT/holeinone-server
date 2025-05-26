@@ -87,7 +87,7 @@ public class PostServiceImpl implements PostService{
         Post postInfo = new Post();
         postInfo.setTitle(postDetailInfo.getTitle()); //제목
         postInfo.setContent(postDetailInfo.getContent()); //내용
-        postInfo.setUserId(userId); //유저 아이디(임시)
+        postInfo.setUserId(userId); //유저 아이디
         postInfo.setRoutineId(postDetailInfo.getRoutineId()); //루틴 아이디
 
         //게시글 등록 하고 게시글 ID 반환받기

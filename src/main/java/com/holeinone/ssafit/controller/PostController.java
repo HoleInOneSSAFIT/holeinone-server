@@ -36,14 +36,23 @@ public class PostController {
     // 게시글 상세 정보 가져오기
     @GetMapping("/{postId}")
     public ResponseEntity<Post> getPost(@PathVariable Long postId) {
-        log.info("get post by id: {}", postId);
-        return ResponseEntity.ok(postService.getPost(postId));
+
+        Post post = postService.getPost(postId);
+
+        log.info("게시글 상세 젇보 : {}", post);
+
+        return ResponseEntity.ok(post);
     }
 
     // 게시글 파일 정보 가져오기
     @GetMapping("/{postId}/files")
     public ResponseEntity<List<PostFile>> getPostFiles(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getFiles(postId));
+
+        List<PostFile> getPostFile = postService.getFiles(postId);
+
+        log.info("게시글 파일 정보 가져오기 : {}", getPostFile);
+
+        return ResponseEntity.ok(getPostFile);
     }
 
     // 루틴 정보 가져오기
@@ -78,6 +87,7 @@ public class PostController {
         User postUserList = postService.getPostUser(postId);
 
         //유저의 프로필 이미지 정보도 가져오기!!!!!!!!!!!!!!!!
+        log.info("게시글 작성한 유저 정보 : {}", postUserList);
 
         return ResponseEntity.ok(postUserList);
     }
