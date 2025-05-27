@@ -90,4 +90,7 @@ public interface PostDao {
     
     //조회수 리턴
     int viewCount(Long postId);
+    
+    //게시글 댓글 수 반환
+    int getCommentCount(Long postId);
 }

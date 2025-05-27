@@ -126,13 +126,20 @@
         SELECT
             p.*,
             IFNULL(l.like_count, 0) AS like_count,
-            (p.view_count * 1 + IFNULL(l.like_count, 0) * 3 + p.comment_count * 5) AS popularity_score
+            IFNULL(c.comment_count, 0) AS comment_count,
+            (p.view_count * 1 + IFNULL(l.like_count, 0) * 3 + IFNULL(c.comment_count, 0) * 5) AS popularity_score
         FROM post p
                  LEFT JOIN (
             SELECT post_id, COUNT(*) AS like_count
             FROM post_like
             GROUP BY post_id
         ) l ON p.post_id = l.post_id
+                 LEFT JOIN (
+            SELECT post_id, COUNT(*) AS comment_count
+            FROM comment
+            WHERE is_deleted = false
+            GROUP BY post_id
+        ) c ON p.post_id = c.post_id
         ORDER BY popularity_score DESC, p.created_at DESC
     </select>
 
@@ -211,6 +218,11 @@
     <!--게시글 조회수 리턴-->
     <select id="viewCount" parameterType="long" resultType="int">
         SELECT view_count FROM post WHERE post_id = #{postId}
+    </select>
+
+    <!--게시글 댓글 수 반환-->
+    <select id="getCommentCount" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM comment where post_id = #{postId}
     </select>
 
 </mapper>
