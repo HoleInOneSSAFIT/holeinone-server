@@ -114,13 +114,6 @@
         WHERE user_id = #{userId}
     </select>
 
-    <!--게시글 좋아요 버튼 클릭-->
-    <update id="postLike" parameterType="long">
-        UPDATE post
-        SET like_count = like_count + 1
-        WHERE post_id = #{postId}
-    </update>
-
     <!--게시글 최신순 조회-->
     <select id="getLatestPosts" resultType="Post">
         SELECT *
@@ -130,10 +123,17 @@
 
     <!--게시글 인기순 조회-->
     <select id="getPopularPosts" resultType="Post">
-        SELECT *,
-               (view_count * 1 + like_count * 3 + comment_count * 5) AS popularity_score
-        FROM post
-        ORDER BY popularity_score DESC, created_at DESC
+        SELECT
+            p.*,
+            IFNULL(l.like_count, 0) AS like_count,
+            (p.view_count * 1 + IFNULL(l.like_count, 0) * 3 + p.comment_count * 5) AS popularity_score
+        FROM post p
+                 LEFT JOIN (
+            SELECT post_id, COUNT(*) AS like_count
+            FROM post_like
+            GROUP BY post_id
+        ) l ON p.post_id = l.post_id
+        ORDER BY popularity_score DESC, p.created_at DESC
     </select>
 
     <!--게시글 운동 부위별 조회-->
@@ -174,5 +174,43 @@
         DELETE FROM post_file
         WHERE post_file_id = #{postFileId}
     </delete>
+
+    <!-- 좋아요 존재 여부 확인 -->
+    <select id="existsByPostIdAndUserId" parameterType="map" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM post_like
+            WHERE post_id = #{postId} AND user_id = #{userId}
+        )
+    </select>
+
+    <!-- 좋아요 삽입 -->
+    <insert id="insertLike" parameterType="PostLike"
+            useGeneratedKeys="true" keyProperty="postLikeId">
+        INSERT INTO post_like (post_id, user_id)
+        VALUES (#{postId}, #{userId})
+    </insert>
+
+    <!-- 좋아요 삭제 -->
+    <delete id="deleteLike" parameterType="map">
+        DELETE FROM post_like
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <!-- 좋아요 개수 카운트 -->
+    <select id="countLikes" parameterType="long" resultType="int">
+        SELECT COUNT(*) FROM post_like WHERE post_id = #{postId}
+    </select>
+
+    <!--게시글 상세페이지 증가-->
+    <update id="increaseViewCount" parameterType="long">
+        UPDATE post
+        SET view_count = view_count + 1
+        WHERE post_id = #{postId}
+    </update>
+
+    <!--게시글 조회수 리턴-->
+    <select id="viewCount" parameterType="long" resultType="int">
+        SELECT view_count FROM post WHERE post_id = #{postId}
+    </select>
 
 </mapper>
