@@ -81,12 +81,6 @@ public class PostController {
         return ResponseEntity.ok(routineVideoList);
     }
 
-    // 댓글 정보 가져오기(댓글 기능 완성 시 가져오기)
-//    @GetMapping("/post/{postId}/comments")
-//    public ResponseEntity<List<Comment>> getComments(@PathVariable Long postId) {
-//        return ResponseEntity.ok(postService.getCommentsByPost(postId));
-//    }
-
     //게시글 작성한 유저 정보
     @GetMapping("/user/{postId}")
     public ResponseEntity<User> getPostUser(@PathVariable Long postId) {

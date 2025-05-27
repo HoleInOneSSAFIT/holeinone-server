@@ -50,7 +50,7 @@ public class VideoServiceImpl implements VideoService {
     }
 
     // 유튜브 영상 검색
-    //todo : 유저 완료
+    //todo : 서버 쪽에서 세션으로 중복 필터링 + YouTube
     @Override
     public List<YoutubeVideo> searchVideos(String part, String duration, String recommend, String token) {
 
@@ -70,7 +70,7 @@ public class VideoServiceImpl implements VideoService {
             String nextPageToken = null; //다음 페이지 토큰 저장용 변수, YouTube API는 검색 페이지를 여러 페이지로 나눠서 줌
             int totalResultsFetched = 0; //지금까지 몇 개의 영상을 가져왔는지 카운팅
             //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!50
-            final long MAX_RESULTS_PER_REQUEST = 20; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
+            final long MAX_RESULTS_PER_REQUEST = 25; //한 번 요청할 때 최대 몇 개의 영상을 가져올지(최대 50개)
             final int MAX_TOTAL_RESULTS = 50; //최종적으로 몇개의 영상을 가져올지
 
             // 페이징을 위한 do-while 루프
@@ -134,7 +134,6 @@ public class VideoServiceImpl implements VideoService {
      * @param duration 사용자가 선택한 길이 ("short", "medium", "long")
      * @return 필터링된 영상 리스트 (제목 + URL)
      */
-    //todo : 유저 완료
     private List<YoutubeVideo> filterVideosByDuration(String part , YouTube youtubeService, List<SearchResult> searchResults, String duration, String token) {
         List<YoutubeVideo> filteredVideos = new ArrayList<>(); // 최종 반환 리스트
 
@@ -286,7 +285,6 @@ public class VideoServiceImpl implements VideoService {
     
     //영상 직접 업로드
     @Override
-    //todo: 유저
     public UploadedVideo uploadVideo(MultipartFile file, UploadedVideo uploadedVideo, String token) {
 
         try {
@@ -311,7 +309,6 @@ public class VideoServiceImpl implements VideoService {
     }
 
     //내가 올린 유튜브 영상
-    //todo: 유저 완료!
     @Override
     public YoutubeVideo directYoutubeUrl(String url, String part, int sequence, int restSecondsAfter, String token) {
         //1. 유튜브 url에서 아이디 추출
