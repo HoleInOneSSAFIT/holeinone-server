@@ -29,7 +29,8 @@
             u.profile_image AS profileImage,
             u.username AS username,
             u.nickname AS nickname,
-            p.title AS postTitle
+            p.title AS postTitle,
+            p.post_id AS postId
         FROM comment c
         JOIN user u ON c.user_id = u.user_id
         JOIN post p ON c.post_id = p.post_id

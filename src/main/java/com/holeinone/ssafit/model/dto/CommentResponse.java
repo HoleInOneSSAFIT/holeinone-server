@@ -22,5 +22,6 @@ public class CommentResponse {
     private String nickname;
 
     // post
+    private Long postId;
     private String postTitle;
 }
