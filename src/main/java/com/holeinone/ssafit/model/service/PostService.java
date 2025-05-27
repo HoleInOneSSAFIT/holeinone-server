@@ -33,9 +33,6 @@ public interface PostService {
     // userId로 본인이 작성한 게시글 목록 가져오기
     List<Post> getPostList(Long userId);
 
-    //좋아요 버튼 클릭
-    int postLike(Long postId);
-
     //게시글 최신순 조회
     List<Post> getLatestPosts();
 
@@ -47,4 +44,13 @@ public interface PostService {
 
     //게시글 수정
     void updatePost(Long postId, PostDetailInfo postDetailInfo, String token);
+
+    // 게시글 좋아요를 누르거나 취소
+    LikeResponse toggleLike(Long postId, String token);
+
+    // 게시글의 좋아요 수 및 내가 좋아요 눌렀는지 여부 조회
+    LikeResponse getLikeInfo(Long postId, String token);
+
+    // 게시글 상세페이지 조회 시 조회수 1 증가
+    int increaseViewCount(Long postId);
 }

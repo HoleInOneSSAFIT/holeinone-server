@@ -205,13 +205,6 @@ public class PostServiceImpl implements PostService{
     public List<Post> getPostList(Long userId) {
         return postDao.selectPostList(userId);
     }
-    
-    //좋아요 버튼 클릭
-    @Override
-    public int postLike(Long postId) {
-
-        return postDao.postLike(postId);
-    }
 
     //게시글 최신순 조회
     @Override
@@ -235,8 +228,10 @@ public class PostServiceImpl implements PostService{
     @Transactional
     @Override
     public void updatePost(Long postId, PostDetailInfo postDetailInfo, String token) {
+
         Long userId = authUtil.extractUserIdFromToken(token);
 
+        // 1. 기존 게시글 확인 및 권한 검사
         Post existingPost = postDao.getPost(postId);
         if (existingPost == null) {
             throw new IllegalArgumentException("존재하지 않는 게시글입니다.");
@@ -246,7 +241,7 @@ public class PostServiceImpl implements PostService{
             throw new SecurityException("게시글 수정 권한이 없습니다.");
         }
 
-        // 게시글 기본 정보 업데이트
+        // 2. 게시글 본문 업데이트
         Post post = new Post();
         post.setPostId(postId);
         post.setTitle(postDetailInfo.getTitle());
@@ -254,27 +249,29 @@ public class PostServiceImpl implements PostService{
         post.setUserId(userId);
         postDao.updatePost(post);
 
-        // 1. 삭제할 파일만 삭제
-        List<Long> filesToDelete = postDetailInfo.getFilesToDelete(); // 새로 추가된 필드
+        // 3. 삭제할 파일 처리
+        List<Long> filesToDelete = postDetailInfo.getFilesToDelete();
         if (filesToDelete != null && !filesToDelete.isEmpty()) {
             List<PostFile> existingFiles = postDao.getFiles(postId);
             for (PostFile file : existingFiles) {
+                log.info("삭제할 파일 : {}", file);
                 if (filesToDelete.contains(file.getPostFileId())) {
                     if (file.getFileUrl() != null) {
-                        s3Uploader.delete(file.getFileUrl()); // S3 삭제
+                        s3Uploader.delete(file.getFileUrl()); // S3에서 삭제
                     }
-                    postDao.deleteFileById(file.getPostFileId()); // DB 삭제
+                    postDao.deleteFileById(file.getPostFileId()); // DB에서 삭제
                 }
             }
         }
 
-        // 2. 새로 추가된 파일 저장
+        // 4. 새 파일 업로드 및 저장
         List<MultipartFile> newFiles = postDetailInfo.getFiles();
-        if (newFiles != null) {
+        if (newFiles != null && !newFiles.isEmpty()) {
             for (MultipartFile file : newFiles) {
                 if (!file.isEmpty()) {
                     try {
                         String fileUrl = s3Uploader.upload(file, "post-files");
+
                         PostFile postFile = new PostFile();
                         postFile.setPostId(postId);
                         postFile.setOriginalFilename(file.getOriginalFilename());
@@ -295,24 +292,73 @@ public class PostServiceImpl implements PostService{
             }
         }
 
-        // 3. 썸네일도 새로 업로드했다면 업데이트
+        // 5. 썸네일 이미지 새로 업로드한 경우
         MultipartFile newThumbnail = postDetailInfo.getThumbnail();
         if (newThumbnail != null && !newThumbnail.isEmpty()) {
             try {
                 String thumbnailUrl = s3Uploader.upload(newThumbnail, "post-thumbnail");
                 post.setThumbnailUrl(thumbnailUrl);
-                postDao.postRoutinethumbnailUrl(post); // 썸네일 URL 업데이트
+                postDao.postRoutinethumbnailUrl(post); // 게시글 썸네일 URL 업데이트
 
                 PostFile thumbnailFile = new PostFile();
                 thumbnailFile.setFileUrl(thumbnailUrl);
                 thumbnailFile.setOriginalFilename(newThumbnail.getOriginalFilename());
                 thumbnailFile.setFileType("THUMBNAIL_IMAGE");
                 thumbnailFile.setPostId(postId);
-                postDao.postDaoFileInsert(thumbnailFile);
+                postDao.postDaoFileInsert(thumbnailFile); // 썸네일 파일 DB 저장
             } catch (IOException e) {
                 throw new RuntimeException("썸네일 업로드 실패", e);
             }
         }
+    }
+
+    // 게시글 좋아요를 누르거나 취소(좋아요 상태 변경)
+    @Override
+    public LikeResponse toggleLike(Long postId, String token) {
+
+        //유저 아이디 반환
+        Long userId = authUtil.extractUserIdFromToken(token);
+
+        //이미 해당 게시글에 좋아요를 눌렀는지 확인
+        boolean alreadyLiked = postDao.existsByPostIdAndUserId(postId, userId);
+
+        if (alreadyLiked) {
+            // 이미 좋아요를 눌렀다면 좋아요 취소
+            postDao.deleteLike(postId, userId);
+        } else {
+            // 좋아요 객체 생성해서 전달
+            PostLike postLike = new PostLike();
+            postLike.setPostId(postId);
+            postLike.setUserId(userId);
+            postDao.insertLike(postLike); //  PostLike 객체 전달
+        }
+
+        // 게시글의 총 좋아요 수 조회
+        int likeCount = postDao.countLikes(postId);
+
+        //(좋아요 수 + 현재 상태 반영)
+        return new LikeResponse(likeCount, !alreadyLiked);
+    }
+
+    // 게시글의 좋아요 수 및 내가 좋아요 눌렀는지 여부 조회(내가 지금 좋아요를 눌렀는지, 총 좋아요 수)
+    @Override
+    public LikeResponse getLikeInfo(Long postId, String token) {
+
+        //유저 아이디 반환
+        Long userId = authUtil.extractUserIdFromToken(token);
+
+        boolean likedByMe = postDao.existsByPostIdAndUserId(postId, userId);
+        int likeCount = postDao.countLikes(postId);
+
+        return new LikeResponse(likeCount, likedByMe);
+    }
+
+    // 게시글 상세페이지 조회 시 조회수 1 증가
+    @Override
+    public int increaseViewCount(Long postId) {
+        postDao.increaseViewCount(postId); //조회수 증가
+
+        return postDao.viewCount(postId); //조회수 리턴
     }
 
 

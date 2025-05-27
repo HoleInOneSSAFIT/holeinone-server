@@ -51,9 +51,6 @@ public interface PostDao {
     // userId로 본인이 작성한 게시글 목록 가져오기
     List<Post> selectPostList(Long userId);
 
-    //좋아요 버튼 클릭
-    int postLike(Long postId);
-
     //게시글 최신순 조회
     List<Post> getLatestPosts();
 
@@ -73,6 +70,24 @@ public interface PostDao {
     // 게시글에 새로운 파일 추가
     int insertFile(PostFile postFile);
 
-
+    //게시글 파일 삭제
     void deleteFileById(Long postFileId);
+    
+    //게시글 좋아요 눌렀는지 확인
+    boolean existsByPostIdAndUserId(Long postId, Long userId);
+    
+    //좋아요 삭제
+    void deleteLike(Long postId, Long userId);
+    
+    //좋아요 삽입
+    void insertLike(PostLike postLike);
+    
+    //좋아요 개수 카운트
+    int countLikes(Long postId);
+
+    // 게시글 상세페이지 조회 시 조회수 1 증가
+    void increaseViewCount(Long postId);
+    
+    //조회수 리턴
+    int viewCount(Long postId);
 }

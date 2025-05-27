@@ -122,16 +122,7 @@ public class PostController {
         return ResponseEntity.ok(postList);
     }
 
-    //게시글 좋아요
-    @PostMapping("/like/{postId}")
-    public ResponseEntity<?> PostLike(@PathVariable Long postId) {
-        
-        //좋아요 버튼 클릭
-        int result = postService.postLike(postId);
 
-        return ResponseEntity.ok("");
-
-    }
 
     //게시글 최신순 조회
     @GetMapping("/latest")
@@ -146,7 +137,12 @@ public class PostController {
      comment_count: 5점**/
     @GetMapping("/popular")
     public ResponseEntity<List<Post>> getPopularPosts() {
-        return ResponseEntity.ok(postService.getPopularPosts());
+
+        List<Post> posts = postService.getPopularPosts();
+
+        log.info("인기 순 게시글 : {}", posts);
+
+        return ResponseEntity.ok(posts);
     }
 
     //루틴 영상 중 하나라도 찾는 부위가 있으면 게시글 반환
@@ -165,32 +161,22 @@ public class PostController {
             @PathVariable Long postId,
             @ModelAttribute PostDetailInfo postDetailInfo,
             @RequestParam(value = "files", required = false) List<MultipartFile> files,
+            @RequestParam(value = "filesToDelete", required = false) List<Long> filesToDelete,
             @RequestHeader("Authorization") String token) {
 
         try {
-            // 파일 정보 로그 출력
-            if (files != null && !files.isEmpty()) {
-                log.info("수정 요청된 파일 수: {}", files.size());
-                for (MultipartFile file : files) {
-                    log.info("파일 이름: {}, 크기: {}, 타입: {}",
-                            file.getOriginalFilename(), file.getSize(), file.getContentType());
-                }
-            } else {
-                log.info("첨부된 파일 없음");
-            }
+            log.info("첨부 파일 수: {}", files != null ? files.size() : 0);
+            log.info("삭제할 파일 수: {}", filesToDelete != null ? filesToDelete.size() : 0);
 
-            // PostDetailInfo에 파일 목록 설정
             postDetailInfo.setFiles(files);
+            postDetailInfo.setFilesToDelete(filesToDelete);
 
-            // 게시글 수정 처리
             postService.updatePost(postId, postDetailInfo, token);
 
             return ResponseEntity.ok("게시글 수정 완료");
-
         } catch (Exception e) {
             log.error("게시글 수정 중 오류 발생", e);
-            return ResponseEntity
-                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("게시글 수정 실패: " + e.getMessage());
         }
     }
@@ -208,6 +194,31 @@ public class PostController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
+    }
+
+    // 게시글 좋아요를 누르거나 취소
+    @PostMapping("/{postId}/like")
+    public ResponseEntity<LikeResponse> toggleLike(
+            @PathVariable Long postId,
+            @RequestHeader("Authorization") String token) {
+        LikeResponse response = postService.toggleLike(postId, token);
+        return ResponseEntity.ok(response);
+    }
+
+    // 게시글의 좋아요 수 및 내가 좋아요 눌렀는지 여부 조회
+    @GetMapping("/{postId}/like")
+    public ResponseEntity<LikeResponse> getLikeInfo(
+            @PathVariable Long postId,
+            @RequestHeader("Authorization") String token) {
+        LikeResponse response = postService.getLikeInfo(postId, token);
+        return ResponseEntity.ok(response);
+    }
+
+    // 게시글 상세페이지 조회 시 조회수 1 증가
+    @PostMapping("/{postId}/increase-view")
+    public ResponseEntity<?> increaseViewCount(@PathVariable Long postId) {
+        int viewCount = postService.increaseViewCount(postId);
+        return ResponseEntity.ok(viewCount); //증가된 조회수 리턴
     }
 
 
