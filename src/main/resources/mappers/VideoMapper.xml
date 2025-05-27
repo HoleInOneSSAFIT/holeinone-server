@@ -1,6 +1,147 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.holeinone.ssafit.model.dao.UserDao">
+<mapper namespace="com.holeinone.ssafit.model.dao.VideoDao">
+
+    <!--유튜브 영상 저장-->
+    <insert id="insertVideoRoutine" parameterType="YoutubeVideo" useGeneratedKeys="true" keyProperty="youtubeVideoId">
+        INSERT INTO youtube_video (
+            source_type,
+            video_url,
+            title,
+            duration_seconds,
+            channel_name,
+            rest_seconds_after,
+            part,
+            youtube_sequence,
+            user_id
+        ) VALUES (
+                     #{sourceType},
+                     #{videoUrl},
+                     #{title},
+                     #{durationSeconds},
+                     #{channelName},
+                     #{restSecondsAfter},
+                     #{part},
+                     #{youtubeSequence},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 업로드 영상 저장 -->
+    <insert id="insertUploadedRoutine" parameterType="UploadedVideo" useGeneratedKeys="true" keyProperty="uploadedVideoId">
+        INSERT INTO uploaded_video (
+            video_url,
+            original_filename,
+            title,
+            part,
+            duration_seconds,
+            uploaded_sequence,
+            rest_seconds_after,
+            user_id
+        ) VALUES (
+                     #{videoUrl},
+                     #{originalFilename},
+                     #{title},
+                     #{part},
+                     #{durationSeconds},
+                     #{uploadedSequence},
+                     #{restSecondsAfter},
+                     #{userId}
+                 )
+    </insert>
+
+    <!--운동 루틴 아이디 생성-->
+    <insert id="createRoutine" parameterType="Routine" useGeneratedKeys="true" keyProperty="routineId">
+        INSERT INTO routine (
+            is_shared,
+            routine_title,
+            routine_content,
+            user_id
+        ) VALUES (
+                     #{isShared},
+                     #{routineTitle},
+                     #{routineContent},
+                     #{userId}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 저장 : 유튜브 영상용 -->
+    <insert id="insertRoutineYoutubeVideo" parameterType="RoutineVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            youtube_video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{youtubeVideoId},
+                     #{sequenceOrder}
+                 )
+    </insert>
+
+    <!-- 루틴-영상 매핑 저장 : 업로드 영상용 -->
+    <insert id="insertRoutineUploadedVideo" parameterType="RoutineVideo">
+        INSERT INTO routine_video (
+            routine_id,
+            uploaded_video_id,
+            sequence_order
+        ) VALUES (
+                     #{routineId},
+                     #{uploadedVideoId},
+                     #{sequenceOrder}
+                 )
+    </insert>
+
+    <!--저장한 유튜브 객체 반환(아이디를 통해 조회)-->
+    <select id="selectYoutubeVideoById" resultType="YoutubeVideo">
+        SELECT *
+        FROM youtube_video
+        WHERE youtube_video_id = #{youtubeVideoId}
+    </select>
+
+    <!--루틴 삭제를 위한 s3 루틴 파일 url 조회-->
+    <select id="routineFileUrl" parameterType="long">
+        SELECT
+            uv.video_url
+        FROM routine_video rv
+                 LEFT JOIN uploaded_video uv ON rv.uploaded_video_id = uv.uploaded_video_id
+        WHERE rv.routine_id = #{routineId}
+          AND uv.video_url IS NOT NULL
+    </select>
+
+    <!--게시글 url 파일 가져오기(루틴 아이디를 공유한 게시글 아이디를 통해서)-->
+    <select id="postFileUrl" parameterType="long">
+        SELECT pf.file_url
+        FROM post p
+                 JOIN post_file pf ON p.post_id = pf.post_id
+        WHERE p.routine_id = #{routineId}
+    </select>
+
+    <!--루틴 삭제-->
+    <delete id="routineIdDelete" parameterType="long">
+        delete
+        from routine
+        where routine_id = #{routineId}
+    </delete>
+
+    <!--루틴-영상 매핑 테이블에서 유튜브 영상ID, 업로드 영상 ID를 가져오기-->
+    <select id="routineVideoIds" parameterType="long" resultType="RoutineVideoId">
+        SELECT youtube_video_id, uploaded_video_id
+        FROM routine_video
+        WHERE routine_id = #{routineId}
+          AND (youtube_video_id IS NOT NULL OR uploaded_video_id IS NOT NULL)
+    </select>
+
+    <!--루틴 삭제 -> 유튜브 영상 db 삭제-->
+    <delete id="deleteYoutubeById" parameterType="long">
+        DELETE FROM youtube_video
+               WHERE youtube_video_id = #{youtubeVideoId}
+    </delete>
+
+    <!--루틴 삭제- > 업로드 영상 db 삭제-->
+    <delete id="deleteUploadedById" parameterType="long">
+        DELETE FROM uploaded_video
+        WHERE uploaded_video_id = #{uploadedVideoId}
+    </delete>
 
 </mapper>
