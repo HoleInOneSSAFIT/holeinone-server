@@ -210,6 +210,7 @@ public class PostController {
     public ResponseEntity<LikeResponse> getLikeInfo(
             @PathVariable Long postId,
             @RequestHeader("Authorization") String token) {
+
         LikeResponse response = postService.getLikeInfo(postId, token);
         return ResponseEntity.ok(response);
     }
