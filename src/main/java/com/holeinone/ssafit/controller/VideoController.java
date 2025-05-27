@@ -33,7 +33,6 @@ public class VideoController {
      * @param part 운동 부위(특정 or 전체), duration 영상 길이(특정 or 전체), recommend 추천 방식(필수)
      * @return 영상 제목 + 링크 목록
      */
-    //todo : 유저 완료
     @GetMapping("/search")
     public ResponseEntity<?> searchYoutubeVideos(@RequestParam String part,
                                                  @RequestParam(required = false, defaultValue = "") String duration,
@@ -55,7 +54,6 @@ public class VideoController {
             }
 
             //랜덤 영상 리스트(만약 사용자가 내가 뽑아낸 영상을 다 넘겼다면? 어떻게 해야할지 생각이 필요하다)
-            //todo: 재추천 로직이 필요한것으로 생각됩니다(기존 리스트랑 겹치지 않게)
             List<YoutubeVideo> videos = videoService.searchVideos(part, duration, recommend, token);
 
             if (videos.isEmpty()) { //만약 영상이 없다면 오류 상태 던지기
@@ -110,7 +108,6 @@ public class VideoController {
 
         if (videoList.getYoutubeVideoList().isEmpty()) {
             //추천할 영상이 더이상 없을 때
-            //todo: 프론트에서 다시 /search 요청 보내도록 해야함 🖥️
             log.warn("모든 추천 영상을 소진했습니다. videoId: {}", youtubeVideoId);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body("추천할 영상이 더 이상 없습니다. 조건을 바꿔 다시 검색해 주세요.");
@@ -326,7 +323,6 @@ public class VideoController {
      * Videos 화면에서 받아온 비디오 값 저장하여 전달
      **/
     //루틴에 영상들 저장하기
-    //todo : 유저
     @PostMapping("/insertVideoRoutine")
     public ResponseEntity<?> insertVideo(HttpSession session, @RequestParam String routineTitle,
                                          @RequestParam String routineContent, @RequestHeader("Authorization") String token) {
@@ -396,7 +392,6 @@ public class VideoController {
      * @UploadedVideo 그 외 영상 정보
      * */
     //내가 찍은 영상 올리기
-    //todo: 유저
     @PostMapping("/myUpload")
     public ResponseEntity<UploadedVideo> uploadVideo(@RequestParam("file") MultipartFile file,
                                                      @RequestParam("title") String title,
@@ -443,7 +438,6 @@ public class VideoController {
 
 
     //내가 유튜브 url 직접 입력
-    //todo: 유저 완료!
     @PostMapping("/directYoutubeUrl")
     public ResponseEntity<?> directYoutubeUrl(@RequestParam("url") String url,
                                               @RequestParam("part") String part,

@@ -143,15 +143,20 @@
         ORDER BY popularity_score DESC, p.created_at DESC
     </select>
 
-    <!--게시글 운동 부위별 조회-->
+    <!-- 게시글 운동 부위별 조회 -->
     <select id="getPostsByPart" parameterType="string" resultType="Post">
         SELECT DISTINCT p.*
         FROM post p
-                 JOIN routine r ON p.routine_id = r.routine_id
-                 JOIN routine_video rv ON r.routine_id = rv.routine_id
-                 LEFT JOIN youtube_video yv ON rv.youtube_video_id = yv.youtube_video_id
-                 LEFT JOIN uploaded_video uv ON rv.uploaded_video_id = uv.uploaded_video_id
-        WHERE yv.part = #{part} OR uv.part = #{part}
+        JOIN routine r ON p.routine_id = r.routine_id
+        JOIN routine_video rv ON r.routine_id = rv.routine_id
+        LEFT JOIN youtube_video yv ON rv.youtube_video_id = yv.youtube_video_id
+        LEFT JOIN uploaded_video uv ON rv.uploaded_video_id = uv.uploaded_video_id
+        <where>
+            <if test="part != null and part != ''">
+                (yv.part = #{part} OR uv.part = #{part})
+            </if>
+            <!-- part가 null이거나 빈 문자열이면 조건 없이 전체 게시글 조회 -->
+        </where>
         ORDER BY p.created_at DESC
     </select>
 
