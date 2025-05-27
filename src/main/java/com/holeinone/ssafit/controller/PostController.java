@@ -181,8 +181,7 @@ public class PostController {
         try {
 
             //유저 아이디 반환
-            Long userId = authUtil.extractUserIdFromToken(token);
-
+            Long userId = authUtil.extractUserIdFromToken(token);s
             return ResponseEntity.ok(userId);
 
         } catch (Exception e) {
