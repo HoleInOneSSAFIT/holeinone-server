@@ -210,6 +210,7 @@ public class PostController {
     public ResponseEntity<LikeResponse> getLikeInfo(
             @PathVariable Long postId,
             @RequestHeader("Authorization") String token) {
+
         LikeResponse response = postService.getLikeInfo(postId, token);
         return ResponseEntity.ok(response);
     }
@@ -219,6 +220,18 @@ public class PostController {
     public ResponseEntity<?> increaseViewCount(@PathVariable Long postId) {
         int viewCount = postService.increaseViewCount(postId);
         return ResponseEntity.ok(viewCount); //증가된 조회수 리턴
+    }
+    
+    //상세 게시글 댓글 수 반환하기
+    @GetMapping("/{postId}/commentCount")
+    public ResponseEntity<?> getCommentCount(@PathVariable Long postId) {
+        
+        //게시글 댓글 수 반환
+        int commentCount = postService.getCommentCount(postId);
+
+        log.info("게시글 댓글 수 반환  :{}", commentCount);
+
+        return ResponseEntity.ok(commentCount);
     }
 
 

@@ -360,6 +360,12 @@ public class PostServiceImpl implements PostService{
 
         return postDao.viewCount(postId); //조회수 리턴
     }
+    
+    //게시글 댓글 수 반환
+    @Override
+    public int getCommentCount(Long postId) {
+        return postDao.getCommentCount(postId);
+    }
 
 
 }

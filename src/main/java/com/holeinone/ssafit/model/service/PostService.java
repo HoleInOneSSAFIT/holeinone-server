@@ -53,4 +53,7 @@ public interface PostService {
 
     // 게시글 상세페이지 조회 시 조회수 1 증가
     int increaseViewCount(Long postId);
+
+    //게시글 댓글 수 반환
+    int getCommentCount(Long postId);
 }
