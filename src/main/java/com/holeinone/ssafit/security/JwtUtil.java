@@ -14,7 +14,7 @@ public class JwtUtil {
     @Value("${jwt.secret}")
     private String secretBase64;
 
-    private static final long ACCESS_MS  = 1000 * 20 ; // 20초
+    private static final long ACCESS_MS  = 1000 * 60 * 20 ; // 20분
     private static final long REFRESH_MS = 7 * 24 * 60 * 60 * 1000;  // 7일
 
     // 내부 헬퍼 - Key 객체
