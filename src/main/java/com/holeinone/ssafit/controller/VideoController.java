@@ -446,8 +446,6 @@ public class VideoController {
                                               HttpSession session,
                                               @RequestHeader("AUthorization") String token) {
 
-        System.out.println(restSecondsAfter);
-
         //내가 올린 유튜브 url
         YoutubeVideo directYoutubeVideo;
         try {

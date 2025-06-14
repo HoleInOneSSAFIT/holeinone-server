@@ -247,6 +247,14 @@ public class VideoServiceImpl implements VideoService {
             if(youtubeVideoList != null) {
                 for (YoutubeVideo youtubeVideo : youtubeVideoList) {
                     youtubeVideo.setUserId(userId); //유저 아이디 저장
+                    
+                    //부위+운동으로 이루어진 단어에서 운동 삭제
+                    String part = youtubeVideo.getPart();
+                    if (part.endsWith("운동")) {
+                        part = part.substring(0, part.length() - 2); // "운동" 제거
+                    }
+                    youtubeVideo.setPart(part);
+                    
                     // YoutubeVideo 저장
                     videoDao.insertVideoRoutine(youtubeVideo);
 
